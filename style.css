@@ -79,7 +79,7 @@ body {
   margin-bottom: 8px;
 }
 
-@media screen and (min-width: 600px) {
+@media screen and (min-width: 750px) {
   .introlinks {
     float: right;
     display: inline;
