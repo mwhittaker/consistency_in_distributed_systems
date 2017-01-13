@@ -4,6 +4,7 @@
 <head>
   <title>Consistency in Distributed Systems</title>
   <link href='style.css' rel='stylesheet'>
+  <link href='svg.css' rel='stylesheet'>
   <meta name=viewport content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="favicon.ico">
 </head>
@@ -22,44 +23,181 @@
           Replicated Data Consistency Explained Through Baseball
         </a>
       </h1>
+
       <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum a
-      tellus eu dolor bibendum iaculis blandit ut enim. Nulla sollicitudin
-      odio diam, in aliquam justo lacinia in. Maecenas pharetra id nunc eget
-      porttitor. Donec luctus massa lacinia, viverra diam eget, varius ex.
-      Cras vestibulum mi in leo lacinia, vulputate malesuada sapien
-      venenatis. Nullam vitae tincidunt tortor. Fusce id sapien sollicitudin,
-      vestibulum risus sit amet, luctus sapien. Ut elit nibh, hendrerit ut
-      blandit non, gravida ut risus. Sed a efficitur ipsum. Duis mattis
-      molestie ex eget tempor. Morbi eleifend vel magna vitae consequat.
-      Donec ut aliquet risus. Morbi bibendum sem at dolor tincidunt varius id
-      mollis dolor.
+      In this lecture, we'll see why storage systems replicate their data and
+      how unfettered replication can lead to anomalies. We'll then discuss how
+      strong and weak consistency can help tame anomalous behavior before
+      concluding with a review of the 2013 CACM article <em>Replicated Data
+      Consistency Explained Through Baseball</em>.
       </p>
 
-      <h2 id="baseball" class="bodysection">Title</h2>
+      <h2 id="replication">Replication</h2>
 
       <p>
-      Nullam maximus varius pellentesque. Nam ac ipsum eu dolor placerat
-      laoreet id eget orci. Donec pellentesque nunc sed leo sagittis
-      accumsan. Aliquam nec mauris nec sem lacinia viverra. Curabitur tortor
-      sapien, vehicula vitae pharetra et, venenatis at massa. Etiam commodo
-      magna at augue mattis mattis.  Suspendisse commodo felis augue, a
-      consectetur tortor fringilla accumsan. Nulla bibendum nisi ac vulputate
-      sollicitudin. Morbi dictum nec quam et pretium.  Vivamus at ultrices
-      orci.
+      Often, distributed storage systems&#8212;like file systems, relational
+      databases, or key-value stores&#8212;store a copy of the same data on
+      multiple computers. This is known as <strong>replication</strong>. To
+      motivate why storage systems replicate their data, we'll look at an
+      example.
       </p>
 
       <p>
-      Nullam maximus varius pellentesque. Nam ac ipsum eu dolor placerat
-      laoreet id eget orci. Donec pellentesque nunc sed leo sagittis
-      accumsan. Aliquam nec mauris nec sem lacinia viverra. Curabitur tortor
-      sapien, vehicula vitae pharetra et, venenatis at massa. Etiam commodo
-      magna at augue mattis mattis.  Suspendisse commodo felis augue, a
-      consectetur tortor fringilla accumsan. Nulla bibendum nisi ac vulputate
-      sollicitudin. Morbi dictum nec quam et pretium.  Vivamus at ultrices
-      orci.
+      Consider a non-distributed key-value store running on a single
+      computer. The key-value store is nothing more than a map (or dictionary)
+      from string-valued keys to string-valued values. The key-value store
+      supports a dirt simple interface. Clients can issue
+      <ul>
+        <li>
+          a <code>get(k)</code> request to retrieve the value associated with
+          key <code>k</code> or
+        </li>
+        <li>
+          a <code>set(k, v)</code> request to associate the value
+          <code>v</code> with key <code>k</code>.
+        </li>
+      </ul>
       </p>
+
+      <p>
+      An example interaction between a client (<code>a</code>) and the
+      key-value store (<code>s</code>) is animated below. The client first
+      sends a <code>set(x,42)</code> request and then a <code>get(x)</code>
+      request to the server. The top half of the animation shows how messages
+      flow between the client and the server while the bottom half traces a
+      timeline of every request and response.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 105" id="one_client_one_kvs">
+        </svg>
+      </div>
+
+      <p>
+      Even though there's only one key-value store, there can be multiple
+      clients. Below, we animate an interaction where client <code>a</code> and
+      client <code>b</code> concurrently set and then get a value from the
+      key-value store <code>s</code>.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 155" id="two_clients_one_kvs">
+        </svg>
+      </div>
+
+      <p>
+      Unfortunately, computers don't live forever. Eventually, they crash. In
+      our example, the entire key-value store is stored on <code>s</code>. This
+      means that if <code>s</code> were to fail, we would irrevocably lose all
+      of our data. That's no good! In reality, storage systems&#8212;like our
+      key-value store&#8212;replicate data across multiple computers so that
+      their data survives even when any single computer fails.
+      </p>
+
+      <h2 id="strong_and_weak_consistency">Strong and Weak Consistency</h2>
+      <p>
+      Replication allows a distributed storage system to tolerate computer
+      failures. Unfortunately, a naively replicated storage system can behave
+      very weirdly. For example, consider a key-value store replicated across
+      two servers (<code>s1</code> and <code>s2</code>). If a client
+      (<code>a</code>) issues a <code>set(x,42)</code> request to
+      <code>s1</code> and then a <code>get(x)</code> request to
+      <code>s2</code>, the <code>get</code> could return something that's not
+      42! This is animated below.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 182" id="anomaly1">
+        </svg>
+      </div>
+
+      <p>
+      This behavior is bananas! If a client issues a <code>set(x, 42)</code>
+      request followed by a <code>get(x)</code> request, we expect the
+      key-value store to return 42. When a storage system exposes an unbridled
+      number of anomalies like this and acts completely bananas, we colloquially
+      say it is <strong>inconsistent</strong>.
+      </p>
+
+      <p>
+      Ideally, a storage system can hide the fact that it's replicated from
+      clients and act indistinguishably from a storage system running on a
+      single computer. The replication would increase the system's
+      fault-tolerance but would not cause it to expose any anomalous behavior
+      to clients. For example, a <code>get(x)</code> request following a
+      <code>set(x,42)</code> request would always return 42. When a replicated
+      storage system behaves indistinguishably from a storage system running on
+      a single computer, we say it is <strong>strongly consistent</strong>.
+      </p>
+
+      <p>
+      Note that the term "strongly consistent" is not well-defined. It means
+      different things in different contexts. In some contexts, it might be
+      used colloquially to express a general notion that a storage system
+      doesn't act bananas. In other contexts, it might be used as a synonym for
+      a very formally defined form of consistency like linearizability (which
+      we'll define in the next lecture).
+      </p>
+
+      <p>
+      Unfortunately, implementing strong consistency&#8212;that is,
+      implementing a system that is strongly consistent&#8212;is both
+      challenging and costly. The algorithms used to implement strong
+      consistency are often complex and nuanced. Worse yet, strong consistency
+      is fundamentally at odds with low-latency and availability: a fact we
+      will intuit and prove in the next lecture.
+      </p>
+
+      <p>
+      As a consequence, systems often eschew strong consistency in favor of
+      <strong>weak consistency</strong>. Weakly consistent storage systems do
+      not behave indistinguishably from storage systems running on a single
+      computer. While they do expose various anomalous behaviors, weakly
+      consistent systems do not completely throw consistency out the window.
+      Instead, they try to sit somewhere between acting completely bananas and
+      acting with strong consistency. They provide some number of basic
+      guarantees that are hopefully sufficient to satiate clients.
+      </p>
+
+      <h2 id="baseball_intro">Replicated Data Consistency Explained Through Baseball</h2>
+      <p>
+      <!-- TODO(mwhittaker): Add links to papers defining each of these
+           consistency models. -->
+      In addition to strong consistency, there are a buffet of flavors (or
+      models) of weak consistency: eventual consistency, strong eventual
+      consistency, causal consistency, causal+ consistency, RedBlue
+      consistency, etc. Each consistency model exposes various degrees of
+      inconsistency with various performance characteristics. Some simple ones
+      can be implemented efficiently but are borderline bananas. Others are
+      more complex but provide stronger consistency.
+      </p>
+
+      <p>
+      Is the baffling number of consistency models actually useful? Are the
+      weaker consistency models too weak? Are the stronger consistency models
+      too strong?
+      </p>
+
+      <p>
+      Doug Terry's 2013 CACM article, <em>Replicated Data Consistency Explained
+        Through Baseball</em>, answers these questions using the game of
+      baseball. Terry defines six consistency models and then shows how
+      different clients of a baseball application can benefit from each.
+      </p>
+
+      <h2 id="consistency_models">Consistency Models</h2>
+      <p>TODO</p>
+
+      <h2 id="game_of_baseball">Baseball as a Sample Application</h2>
+      <p>TODO</p>
+
+      <h2 id="participants">Read Requirements for Participants</h2>
+      <p>TODO</p>
     </article>
   </div>
+
+  <script src="snap.svg.js"></script>
+  <script src="distributed_systems.js"></script>
+  <script src="1_baseball.js"></script>
 </body>
 </html>
