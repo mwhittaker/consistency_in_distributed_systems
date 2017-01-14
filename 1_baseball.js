@@ -98,12 +98,31 @@ function example_weak_consistency() {
   ds.animate(s, bbox, [a, s1, s2], [a_actions, s1_actions], 2000);
 }
 
+function multi_get() {
+  var s = Snap("#multi_get");
+
+  var a = ds.node(s, 125, 20, "a", ds.Color.Red);
+  var s1 = ds.node(s, 275, 20, "s", ds.Color.Blue);
+  var bbox = s.group(a.element, s1.element).getBBox();
+
+  var a_actions = new ds.NodeAction("a", [
+    new ds.Message([1, 0, 1], "set(x,1)", "ok", "s"),
+    new ds.Delay(0.5),
+    new ds.Message([1, 0, 1], "set(y,2)", "ok", "s"),
+    new ds.Delay(0.5),
+    new ds.Message([1, 0, 1], "get(x,y)", "1,2", "s"),
+  ], true);
+
+  ds.animate(s, bbox, [a, s1], [a_actions], 2000);
+}
+
 function main() {
   one_client_one_kvs();
   two_clients_one_kvs();
   anomaly1();
   example_strong_consistency();
   example_weak_consistency();
+  multi_get();
 }
 
 window.onload = main;

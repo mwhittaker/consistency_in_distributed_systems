@@ -191,10 +191,10 @@
       we'll look at an eventually consistent key-value store. Each server in
       the key-value store buffers write (i.e. <code>set</code>) requests and
       propagates them to the other servers every so often. As with the
-      inconsistent key-value store, a <code>get(x)</code> following a
+      inconsistent key-value store, a <code>get(x)</code> requests following a
       <code>set(x,42)</code> request can return something other than 42. But,
       if a client waits long enough, <em>eventually</em> a <code>get(x)</code>
-      will return 42. This is animated below.
+      request will return 42. This is animated below.
       </p>
 
       <div class="svgbox">
@@ -236,16 +236,91 @@
       key-value store. As with our examples above, there can be multiple
       clients issuing read (i.e. <code>get</code>) and write (i.e.
       <code>set</code>) requests to the replicated key-value store
-      concurrently. We assume that when a client issues a write request, the
-      effects of the write are eventually propagated to all replicas.
+      concurrently. We'll also augment <code>get</code> requests by allowing
+      them to read multiple keys at once. For example, the request <code>get(x,
+      y)</code> returns values for <code>x</code> and <code>y</code>
+      simultaneously. This is animated below.
       </p>
 
-      <p><strong>Strong Consistency.</strong></p>
-      <p><strong>Eventual Consistency.</strong></p>
-      <p><strong>Consistent Prefix.</strong></p>
-      <p><strong>Bounded Staleness.</strong></p>
-      <p><strong>Monotonic Reads.</strong></p>
-      <p><strong>Read My Writes.</strong></p>
+      <div class="svgbox">
+        <svg viewBox="0 0 400 105" id="multi_get">
+        </svg>
+      </div>
+
+      <p>
+      To make life easier for ourselves, we make a couple of simplifying
+      assumptions. First, we assume that when a client issues a write request,
+      the effects of the write are eventually propagated to all replicas.
+      Second, we assume that all write requests are executed in the same order
+      at all replicas (we'll see how to implement something like this in the
+      third lecture). With these assumptions in place, the six consistency
+      models will differ only in how read requests behave.
+      </p>
+
+      <p>
+      We briefly define each of the consistency models here. In the next
+      section, we'll give an example illustrating the differences between the
+      six.
+      </p>
+
+      <ol>
+        <li>
+        <strong>Strong Consistency.</strong> With a strongly consistent
+        key-value store, a <code>get(x<sub>1</sub>,...,x<sub>n</sub>)</code>
+        request is guaranteed to return the most recently written values of
+        every key from <code>x<sub>1</sub></code> to
+        <code>x<sub>n</sub></code>.
+        </li>
+
+        <li>
+        <strong>Eventual Consistency.</strong> With an eventually consistent
+        key-value store, a <code>get(x<sub>1</sub>,...,x<sub>n</sub>)</code>
+        request is guaranteed to return values
+        <code>v<sub>1</sub>,...,v<sub>n</sub></code> where
+        <code>v<sub>i</sub></code> is any previously written value of key
+        <code>x<sub>i</sub></code>. With our assumption that writes are
+        eventually propagated to all replicas, if clients stop issuing write
+        requests for a while, reads will (typically) return the most recently
+        written values.
+        </li>
+
+        <li>
+        <strong>Consistent Prefix.</strong> Recall our assumption that writes
+        are executed in the same order on all replicas. With a key-value store
+        satisfying consistent prefix, a <code>get</code> request is guaranteed
+        to return values that are consistent with some prefix of this sequence
+        of writes. Note that for <code>get</code> requests reading a single
+        value, consistent prefix is equivalent to eventual consistency.
+        </li>
+
+        <li>
+        <strong>Bounded Staleness.</strong> With a key-value store satisfying
+        bounded staleness, a <code>get(x<sub>1</sub>,...,x<sub>n</sub>)</code>
+        request is guaranteed to return values
+        <code>v<sub>1</sub>,...,v<sub>n</sub></code> where
+        <code>v<sub>i</sub></code> is some value that key
+        <code>x<sub>i</sub></code> took on during the last <em>t</em> minutes
+        for some fixed <em>t</em>.
+        </li>
+
+        <li>
+        <strong>Monotonic Reads.</strong> With a key-value store satisfying
+        monotonic reads, a client's initial read of value <code>x</code> is
+        only guaranteed to return some previously written value of
+        <code>x</code> (this is equivalent to eventual consistency). However,
+        each subsequent read of <code>x</code> by the same client is guaranteed
+        to return the same value of <code>x</code> or a more up-to-date value
+        of <code>x</code> compared with the previous read of <code>x</code>.
+        </li>
+
+        <li>
+        <strong>Read My Writes.</strong> With a key-value store satisfying
+        monotonic reads, if a client writes a value <code>v</code> to key
+        <code>x</code>, then any subsequent reads of <code>x</code> by the same
+        client will return <code>v</code> or a more recently written value of
+        <code>x</code>.
+        </li>
+      </ol>
 
       <h2 id="game_of_baseball">Baseball as a Sample Application</h2>
       <p>TODO</p>

@@ -13,6 +13,8 @@ styling of the site was stolen heavily from the very slick
 [redbook.io](http://redbook.io).
 
 ## TODO
+- [ ] Minify Javascript.
+- [ ] Defer CSS loads.
 - [ ] Add Google Analytics.
 - [ ] Consider buying the [consistencyindistributed.systems][domain] domain.
 
