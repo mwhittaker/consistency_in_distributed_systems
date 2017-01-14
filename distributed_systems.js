@@ -1,11 +1,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Types
 ////////////////////////////////////////////////////////////////////////////////
+// The distributed systems, abbreviated ds, namespace.
 ds = {}
 
+// A node represents a server in a distributed systems. Each node is drawn as a
+// colored circle with a name written in the center of the circle. See
+// https://mwhittaker.github.io/1_baseball.html for an example.
+//
 // type name = string;
 //
-// type node = {
+// type Node = {
 //   element: Snap.element,
 //   name:    name,
 //   color:   string,
@@ -16,13 +21,23 @@ ds.Node = function(element, name, color) {
   this.color = color;
 }
 
+// Each node in a distributed system performs a sequence of actions. First, the
+// node can sit there doing nothing. We call this delaying. Or, the node can
+// send a message to another node. Each message is labelled with a call. For
+// example, a message sent to a key-value store could be labelled with "get(x)"
+// or "set(x, 42)". Similarly, each message is associated with a response like
+// "42" or "OK". The duration of each message is expressed as three floats. The
+// first is the time it takes to send to the destination. The next is the time
+// spent at the destination. The third is the time it takes to return to the
+// destination.
+//
 // type action =
 //   | Delay of {
 //     duration: float
 //   }
 //   | Message of {
 //     to:       name,
-//     duration: float,
+//     duration: [float, float, float],
 //     call:     string,
 //     resp:     string,
 //   }
@@ -48,6 +63,21 @@ ds.Message = function(duration, call, resp, to) {
   this.resp = resp;
 }
 
+// A `node_action` represents the actions of a single node. It includes the
+// name of the node, the actions the node takes, and whether or not the actions
+// should be drawn on the timeline.
+//
+// type NodeAction = {
+//   name: name,
+//   actions: [action],
+//   draw_timeline: bool,
+// }
+ds.NodeAction = function(name, actions, draw_timeline) {
+  this.name = name;
+  this.actions = actions;
+  this.draw_timeline = draw_timeline;
+}
+
 // type color =
 //   | Red
 //   | Blue
@@ -63,21 +93,36 @@ ds.Color = {
 ////////////////////////////////////////////////////////////////////////////////
 // Helper Functions
 ////////////////////////////////////////////////////////////////////////////////
-// TODO(mwhittaker): Comment.
+// TODO(mwhittaker): Move helper functions into ds namespace.
+// `sum([x_1, ..., x_n])` returns `x_1 + ... + x_n`.
 function sum(xs) {
   return xs.reduce(function (x, y) { return x + y; });
 }
 
-// TODO(mwhittaker): Comment.
+// `max(xs)` returns the maximum element in `xs`.
 function max(xs) {
   return Math.max.apply(null, xs);
 }
 
-// TODO(mwhittaker): Comment.
+// `group(s, xs)` constructs a group, using `s`, of the Snap elements in `xs`.
 function group(s, xs) {
   return s.group.apply(s, xs);
 }
 
+// `duration(a)` returns the duration of action `a`.
+function duration(a) {
+    if (a.type === ds.ActionType.Delay) {
+      return a.duration;
+    } else if (a.type === ds.ActionType.Message) {
+      return sum(a.duration);
+    } else {
+      console.log("Unknown action type: " + x.type);
+    }
+}
+
+// `rottext(s, x, y, text, angle, padding)` writes `text` with its bottom left
+// corner at position `(x, y)`. It then rotates the text `angle` degrees about
+// its bottom left corner. It then displaces it vertically by `padding`.
 function rottext(s, x, y, text, angle, padding=0) {
   var dx = padding / Math.sqrt(2);
   var dy = padding / Math.sqrt(2);
@@ -89,7 +134,8 @@ function rottext(s, x, y, text, angle, padding=0) {
 ////////////////////////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////////////////////////
-// TODO(mwhittaker): Comment.
+// `node(s, cx, cy, name, color)` constructs a node with name `name` and color
+// `color` centered at `(cx, cy)`.
 ds.node = function(s, cx, cy, name, color) {
   var r = 20;
   var circle = s.circle(cx, cy, r);
@@ -145,7 +191,7 @@ ds.animation_config = function(s, bbox) {
 // TODO(mwhittaker): Comment.
 ds.max_duration = function(node_actions) {
   return max(node_actions.map(function(x) {
-    return sum(x[1].map(function(x) { return x.duration; }));
+    return sum(x.actions.map(function(x) { return duration(x); }));
   }));
 }
 
@@ -162,7 +208,6 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
   // Metadata.
   var c = ds.animation_config(s, bbox);
   var max_duration = ds.max_duration(node_actions);
-  console.log(max_duration);
   var node_index = {};
   for (var i = 0; i < nodes.length; ++i) {
     node_index[nodes[i].name] = nodes[i];
@@ -173,8 +218,8 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
   var msgs = [];
   for (var i = 0; i < node_actions.length; ++i) {
     var node_action = node_actions[i];
-    var name = node_action[0];
-    var actions = node_action[1];
+    var name = node_action.name;
+    var actions = node_action.actions;
     var node = node_index[name];
 
     // Client name.
@@ -193,7 +238,7 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
     var delay = 0;
     for (var j = 0; j < actions.length; ++j) {
       var action = actions[j];
-      var width = (action.duration / max_duration) * c.client_width;
+      var width = (duration(action) / max_duration) * c.client_width;
 
       if (action.type == ds.ActionType.Message) {
         // Client line.
@@ -235,7 +280,7 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
       }
 
       x += width;
-      delay += action.duration;
+      delay += duration(action);
     }
   }
 
@@ -278,18 +323,19 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
       for (var i = 0; i < msgs.length; ++i) {
         var msg = msgs[i];
         var start = msg.delay;
-        var mid = msg.delay + (msg.duration / 2);
-        var stop = msg.delay + msg.duration;
+        var arrive_dest = start + msg.duration[0];
+        var leave_dest = arrive_dest + msg.duration[1];
+        var stop = leave_dest + msg.duration[2];
 
-        if (start <= msg_time && msg_time <= mid) {
-          var fraction = 2 * (msg_time - start) / msg.duration;
+        if (start <= msg_time && msg_time <= arrive_dest) {
+          var fraction = (msg_time - start) / msg.duration[0];
           var dx = msg.x2 - msg.x1;
           var dy = msg.y2 - msg.y1;
           var cx = msg.x1 + (dx * fraction);
           var cy = msg.y1 + (dy * fraction);
           msg.element.attr({cx:cx, cy:cy});
-        } else if (mid <= msg_time && msg_time <= stop) {
-          var fraction = 2 * (msg_time - mid) / msg.duration;
+        } else if (leave_dest <= msg_time && msg_time <= stop) {
+          var fraction = (msg_time - leave_dest) / msg.duration[2];
           var dx = msg.x1 - msg.x2;
           var dy = msg.y1 - msg.y2;
           var cx = msg.x2 + (dx * fraction);
