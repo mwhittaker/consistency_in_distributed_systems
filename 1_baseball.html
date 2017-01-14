@@ -131,12 +131,29 @@
       </p>
 
       <p>
+      Reconsider the execution above where client <code>a</code> sends a
+      <code>set(x,42)</code> command to server <code>s1</code> and then a
+      <code>get(x)</code> command to server <code>s2</code>. If <code>s1</code>
+      propagates the effects of the <code>set(x,42)</code> command to
+      <code>s2</code> before responding to <code>a</code>, then <code>s2</code>
+      will correctly return 42 when it receives a <code>get(x)</code> request.
+      By doing this, the system implements strongly consistency. This is
+      animated below.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 182" id="example_strong_consistency">
+        </svg>
+      </div>
+
+      <p>
       Note that the term "strongly consistent" is not well-defined. It means
       different things in different contexts. In some contexts, it might be
       used colloquially to express a general notion that a storage system
       doesn't act bananas. In other contexts, it might be used as a synonym for
-      a very formally defined form of consistency like linearizability (which
-      we'll define in the next lecture).
+      a very formally defined form of consistency like
+      <strong>linearizability</strong> (which we'll define in the next
+      lecture).
       </p>
 
       <p>
@@ -144,8 +161,11 @@
       implementing a system that is strongly consistent&#8212;is both
       challenging and costly. The algorithms used to implement strong
       consistency are often complex and nuanced. Worse yet, strong consistency
-      is fundamentally at odds with low-latency and availability: a fact we
-      will intuit and prove in the next lecture.
+      is fundamentally at odds with low-latency and availability. We'll defer
+      an in-depth discussion of this fact to the next lecture, but we already
+      saw hints of it in the previous animation. When we made our key-value
+      store strongly consistent, the <code>set(x, 42)</code> request took
+      longer than it did when the key-value store was inconsistent.
       </p>
 
       <p>
@@ -158,6 +178,29 @@
       acting with strong consistency. They provide some number of basic
       guarantees that are hopefully sufficient to satiate clients.
       </p>
+
+      <p>
+      For example, consider one of the weakest forms of weak consistency:
+      <strong>eventual consistency</strong>. An eventually consistent system
+      guarantees that if all clients stop issuing requests for a while, then
+      all the system's replicas will converge to the same state.
+      </p>
+
+      <p>
+      Let's again reconsider the example execution from above, except this time
+      we'll look at an eventually consistent key-value store. Each server in
+      the key-value store buffers write (i.e. <code>set</code>) requests and
+      propagates them to the other servers every so often. As with the
+      inconsistent key-value store, a <code>get(x)</code> following a
+      <code>set(x,42)</code> request can return something other than 42. But,
+      if a client waits long enough, <em>eventually</em> a <code>get(x)</code>
+      will return 42. This is animated below.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 182" id="example_weak_consistency">
+        </svg>
+      </div>
 
       <h2 id="baseball_intro">Replicated Data Consistency Explained Through Baseball</h2>
       <p>
@@ -188,7 +231,21 @@
       </p>
 
       <h2 id="consistency_models">Consistency Models</h2>
-      <p>TODO</p>
+      <p>
+      In this section, we define six consistency models for a replicated
+      key-value store. As with our examples above, there can be multiple
+      clients issuing read (i.e. <code>get</code>) and write (i.e.
+      <code>set</code>) requests to the replicated key-value store
+      concurrently. We assume that when a client issues a write request, the
+      effects of the write are eventually propagated to all replicas.
+      </p>
+
+      <p><strong>Strong Consistency.</strong></p>
+      <p><strong>Eventual Consistency.</strong></p>
+      <p><strong>Consistent Prefix.</strong></p>
+      <p><strong>Bounded Staleness.</strong></p>
+      <p><strong>Monotonic Reads.</strong></p>
+      <p><strong>Read My Writes.</strong></p>
 
       <h2 id="game_of_baseball">Baseball as a Sample Application</h2>
       <p>TODO</p>

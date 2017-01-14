@@ -191,7 +191,11 @@ ds.animation_config = function(s, bbox) {
 // TODO(mwhittaker): Comment.
 ds.max_duration = function(node_actions) {
   return max(node_actions.map(function(x) {
-    return sum(x.actions.map(function(x) { return duration(x); }));
+    if (x.draw_timeline) {
+      return sum(x.actions.map(function(x) { return duration(x); }));
+    } else {
+      return 0;
+    }
   }));
 }
 
@@ -221,18 +225,21 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
     var name = node_action.name;
     var actions = node_action.actions;
     var node = node_index[name];
+    var draw_timeline = node_action.draw_timeline;
 
-    // Client name.
-    var x = c.pad_right;
-    var y = c.top_y + c.pad_top + ((i + 1) * c.client_height);
-    var client_name = s.text(x, y, name);
-    client_name.addClass("clientname");
+    if (draw_timeline) {
+      // Client name.
+      var x = c.pad_right;
+      var y = c.top_y + c.pad_top + ((i + 1) * c.client_height);
+      var client_name = s.text(x, y, name);
+      client_name.addClass("clientname");
 
-    // Client progress axis.
-    var x = c.pad_left + c.client_pad_left;
-    var y = client_name.getBBox().cy;
-    var client_axis = s.line(x, y, x + c.client_width, y);
-    client_axis.addClass("clientaxis");
+      // Client progress axis.
+      var x = c.pad_left + c.client_pad_left;
+      var y = client_name.getBBox().cy;
+      var client_axis = s.line(x, y, x + c.client_width, y);
+      client_axis.addClass("clientaxis");
+    }
 
     // Client lines and texts.
     var delay = 0;
@@ -241,23 +248,25 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
       var width = (duration(action) / max_duration) * c.client_width;
 
       if (action.type == ds.ActionType.Message) {
-        // Client line.
-        var client_line = s.line(x, y, x + width, y);
-        client_line.addClass("clientline");
-        client_line.attr({stroke:node.color});
-        client_lines.push(client_line);
+        if (draw_timeline) {
+          // Client line.
+          var client_line = s.line(x, y, x + width, y);
+          client_line.addClass("clientline");
+          client_line.attr({stroke:node.color});
+          client_lines.push(client_line);
 
-        // Client call.
-        var client_call = rottext(s, x, y, action.call,
-            c.action_rotation, c.action_pad);
-        client_call.addClass("clienttext");
-        client_texts.push(client_call);
+          // Client call.
+          var client_call = rottext(s, x, y, action.call,
+              c.action_rotation, c.action_pad);
+          client_call.addClass("clienttext");
+          client_texts.push(client_call);
 
-        // Client response.
-        var client_resp = rottext(s, x + width, y, action.resp,
-            c.action_rotation, c.action_pad);
-        client_resp.addClass("clienttext");
-        client_texts.push(client_resp);
+          // Client response.
+          var client_resp = rottext(s, x + width, y, action.resp,
+              c.action_rotation, c.action_pad);
+          client_resp.addClass("clienttext");
+          client_texts.push(client_resp);
+        }
 
         // Message.
         var from_bbox = node.element.getBBox();
