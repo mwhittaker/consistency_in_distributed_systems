@@ -1,0 +1,64 @@
+table {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.15em;
+  border-collapse: collapse;
+}
+
+/* baseball_scoresheet */
+#baseball_scoresheet th, #baseball_scoresheet td {
+  padding-left: 2pt;
+  padding-right: 2pt;
+  text-align: center;
+}
+
+#baseball_scoresheet #visitors {
+  text-align: left;
+}
+
+#baseball_scoresheet #home { text-align: left;
+}
+
+@media screen and (min-width: 750px) {
+  #baseball_scoresheet th, #baseball_scoresheet td {
+    padding-left: 15pt;
+    padding-right: 15pt;
+  }
+}
+
+#baseball_scoresheet_1 th {
+  border-bottom: 2px solid black;
+}
+
+#baseball_scoresheet_2 td {
+  border-bottom: 1px solid black;
+}
+
+#baseball_scoresheet_3 td {
+  border-bottom: 2px solid black;
+}
+
+/* scoresheet_examples */
+#scoresheet_examples td {
+  padding-left: 2pt;
+  padding-right: 2pt;
+}
+
+@media screen and (min-width: 750px) {
+  #scoresheet_examples td {
+    padding-left: 5pt;
+    padding-right: 5pt;
+  }
+}
+
+#scoresheet_examples td {
+  border-bottom: 1px solid black;
+}
+
+#scoresheet_examples tr:first-child {
+  border-top: 2px solid black;
+}
+
+#scoresheet_examples tr:last-child {
+  border-bottom: 2px solid black;
+}

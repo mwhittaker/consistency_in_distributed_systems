@@ -141,3 +141,17 @@ p {
   font-weight: 600;
   line-height: 28px;
 }
+
+pre {
+  margin-top: 0em;
+  margin-bottom: 1.15em;
+  background-color: #f7f7f7;
+  overflow: auto;
+  padding: 5pt;
+}
+
+@media screen and (min-width: 600px) {
+  pre {
+    padding: 16pt;
+  }
+}

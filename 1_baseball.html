@@ -5,6 +5,7 @@
   <title>Consistency in Distributed Systems</title>
   <link href='style.css' rel='stylesheet'>
   <link href='svg.css' rel='stylesheet'>
+  <link href='1_baseball.css' rel='stylesheet'>
   <meta name=viewport content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="favicon.ico">
 </head>
@@ -324,6 +325,97 @@
 
       <h2 id="game_of_baseball">Baseball as a Sample Application</h2>
       <p>TODO</p>
+
+      <pre><code><strong>set</strong>("visitors", 0);
+<strong>set</strong>("home", 0);
+for inning = 1 .. 9
+  outs = 0;
+  while outs &lt; 3
+    visiting player bats;
+    for each run scored
+      score = <strong>get</strong>("visitors");
+      <strong>set</strong>("visitors", score + 1);
+  outs = 0;
+  while outs &lt; 3
+    home player bats;
+    for each run scored
+      score = <strong>get</strong>("home");
+      <strong>set</strong>("home", score + 1);
+end game;</code></pre>
+
+      <table id="baseball_scoresheet">
+        <tr id="baseball_scoresheet_1">
+          <th> </th> <th>1</th> <th>2</th> <th>3</th> <th>4</th>
+          <th>5</th> <th>6</th> <th>7</th> <th>8</th> <th>9</th>
+          <th>RUNS</th>
+        </tr>
+        <tr id="baseball_scoresheet_2">
+          <td id="visitors"><strong>Visitors</strong></td>
+          <td>0</td> <td>0</td> <td>1</td> <td>0</td> <td>1</td>
+          <td>0</td> <td>0</td> <td> </td> <td> </td> <td>2</td>
+        </tr>
+        <tr id="baseball_scoresheet_3">
+          <td id="home"><strong>Home</strong></td>
+          <td>1</td> <td>0</td> <td>1</td> <td>1</td> <td>0</td>
+          <td>2</td> <td> </td> <td> </td> <td> </td> <td>5</td>
+        </tr>
+      </table>
+
+      <table id="scoresheet_examples">
+        <tr>
+          <td><strong>Strong Consistency</strong></td>
+          <td>2&#8209;5</td>
+        </tr>
+        <tr>
+          <td><strong>Eventual Consistency</strong></td>
+          <td>
+            0&#8209;0, 0&#8209;1, 0&#8209;2, 0&#8209;3, 0&#8209;4, 0&#8209;5,
+            1&#8209;0, 1&#8209;1, 1&#8209;2, 1&#8209;3, 1&#8209;4, 1&#8209;5,
+            2&#8209;0, 2&#8209;1, 2&#8209;2, 2&#8209;3, 2&#8209;4, 2&#8209;5
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Consistent Prefix</strong></td>
+          <td>
+            0&#8209;0, 0&#8209;1, 1&#8209;1, 1&#8209;2, 1&#8209;3, 2&#8209;3,
+            2&#8209;4, 2&#8209;5
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Bounded Staleness</strong>
+            <em>(scores that are at most one inning out-of-date)</em>
+          </td>
+          <td>2&#8209;3, 2&#8209;4, 2&#8209;5</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Monotonic Reads</strong>
+            <em>(after reading 1&#8209;3)</em>
+          </td>
+          <td>
+            1&#8209;3, 1&#8209;4, 1&#8209;5, 2&#8209;3, 2&#8209;4, 2&#8209;5
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Read My Writes</strong>
+            <em>(for the writer)</em>
+          </td>
+          <td>2&#8209;5</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Read My Writes</strong>
+            <em>(for anyone other than the writer)</em>
+          </td>
+          <td>
+            0&#8209;0, 0&#8209;1, 0&#8209;2, 0&#8209;3, 0&#8209;4, 0&#8209;5,
+            1&#8209;0, 1&#8209;1, 1&#8209;2, 1&#8209;3, 1&#8209;4, 1&#8209;5,
+            2&#8209;0, 2&#8209;1, 2&#8209;2, 2&#8209;3, 2&#8209;4, 2&#8209;5
+          </td>
+        </tr>
+      </table>
 
       <h2 id="participants">Read Requirements for Participants</h2>
       <p>TODO</p>
