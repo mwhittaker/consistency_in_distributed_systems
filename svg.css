@@ -47,3 +47,32 @@ svg .clientprogress {
 svg .msg {
   r: 6;
 }
+
+svg .linbar {
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+svg .lincalltext, svg .linresptext, svg .linregtext {
+  font-size: 8pt;
+  font-family: monospace;
+  text-anchor: middle;
+  alignment-baseline: central;
+}
+
+svg .linline {
+  stroke: black;
+  stroke-width: 3;
+}
+
+svg .linregbox {
+  stroke: black;
+  stroke-width: 1;
+  fill-opacity: 0.4;
+}
+
+svg .lintimeline {
+  stroke: black;
+  stroke-width: 2;
+  stroke-opacity: 0.5;
+}
