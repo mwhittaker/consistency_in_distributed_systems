@@ -15,7 +15,6 @@ styling of the site was stolen heavily from the very slick
 ## TODO
 - [ ] Minify Javascript.
 - [ ] Defer CSS loads.
-- [ ] Add Google Analytics.
 - [ ] Consider buying the [consistencyindistributed.systems][domain] domain.
 
 [domain]: https://domains.google.com/registrar?s=consistency#ss=consistencyindistrubuted.systems
