@@ -36,8 +36,8 @@
       <h2 id="replication">Replication</h2>
 
       <p>
-      Often, distributed storage systems&#8212;like file systems, relational
-      databases, or key-value stores&#8212;store a copy of the same data on
+      Often, distributed storage systems&mdash;like file systems, relational
+      databases, or key-value stores&mdash;store a copy of the same data on
       multiple computers. This is known as <strong>replication</strong>. To
       motivate why storage systems replicate their data, we'll look at an
       example.
@@ -90,8 +90,8 @@
       Unfortunately, computers don't live forever. Eventually, they crash. In
       our example, the entire key-value store is stored on <code>s</code>. This
       means that if <code>s</code> were to fail, we would irrevocably lose all
-      of our data. That's no good! In reality, storage systems&#8212;like our
-      key-value store&#8212;replicate data across multiple computers so that
+      of our data. That's no good! In reality, storage systems&mdash;like our
+      key-value store&mdash;replicate data across multiple computers so that
       their data survives even when any single computer fails.
       </p>
 
@@ -158,8 +158,8 @@
       </p>
 
       <p>
-      Unfortunately, implementing strong consistency&#8212;that is,
-      implementing a system that is strongly consistent&#8212;is both
+      Unfortunately, implementing strong consistency&mdash;that is,
+      implementing a system that is strongly consistent&mdash;is both
       challenging and costly. The algorithms used to implement strong
       consistency are often complex and nuanced. Worse yet, strong consistency
       is fundamentally at odds with low-latency and availability. We'll defer
@@ -288,14 +288,15 @@
         <li>
         <strong>Consistent Prefix.</strong> Recall our assumption that writes
         are executed in the same order on all replicas. With a key-value store
-        satisfying consistent prefix, a <code>get</code> request is guaranteed
-        to return values that are consistent with some prefix of this sequence
-        of writes. Note that for <code>get</code> requests reading a single
-        value, consistent prefix is equivalent to eventual consistency.
+        guaranteeing consistent prefixes, a <code>get</code> request is
+        guaranteed to return values that are consistent with some prefix of
+        this sequence of writes. Note that for <code>get</code> requests
+        reading a single value, consistent prefix is equivalent to eventual
+        consistency.
         </li>
 
         <li>
-        <strong>Bounded Staleness.</strong> With a key-value store satisfying
+        <strong>Bounded Staleness.</strong> With a key-value store guaranteeing
         bounded staleness, a <code>get(x<sub>1</sub>,...,x<sub>n</sub>)</code>
         request is guaranteed to return values
         <code>v<sub>1</sub>,...,v<sub>n</sub></code> where
@@ -305,7 +306,7 @@
         </li>
 
         <li>
-        <strong>Monotonic Reads.</strong> With a key-value store satisfying
+        <strong>Monotonic Reads.</strong> With a key-value store guaranteeing
         monotonic reads, a client's initial read of value <code>x</code> is
         only guaranteed to return some previously written value of
         <code>x</code> (this is equivalent to eventual consistency). However,
@@ -315,8 +316,8 @@
         </li>
 
         <li>
-        <strong>Read My Writes.</strong> With a key-value store satisfying
-        monotonic reads, if a client writes a value <code>v</code> to key
+        <strong>Read My Writes.</strong> With a key-value store guaranteeing
+        read my writes, if a client writes a value <code>v</code> to key
         <code>x</code>, then any subsequent reads of <code>x</code> by the same
         client will return <code>v</code> or a more recently written value of
         <code>x</code>.
@@ -324,7 +325,22 @@
       </ol>
 
       <h2 id="game_of_baseball">Baseball as a Sample Application</h2>
-      <p>TODO</p>
+      <p>
+      The name of the game is baseball. A baseball game consists of nine
+      rounds, called innings. During the first half of each inning (called the
+      top of the inning), the visiting team bats until they make three outs.
+      Then, during the second half of each inning (called the bottom of the
+      inning), the home team bats until they make three outs. Whichever team
+      scores more runs by the end of the game wins.
+      </p>
+
+      <p>
+      In the rest of this lecture, we'll model a baseball game using the
+      pseudocode below. The state of a baseball game is stored in a
+      replicated key-value store. The visiting score is stored under the key
+      <code>"visitors"</code>, and the home score is stored under the key
+      <code>"home"</code>.
+      </p>
 
       <pre><code><strong>set</strong>("visitors", 0);
 <strong>set</strong>("home", 0);
@@ -343,6 +359,37 @@ for inning = 1 .. 9
       <strong>set</strong>("home", score + 1);
 end game;</code></pre>
 
+      <p>
+      For simplicity, we'll assume that a single client (the official
+      scorekeeper) updates the score; no other clients write to the
+      <code>"visitors"</code> or <code>"home"</code> key in the key-value
+      store. To illustrate the differences between the six consistency models
+      defined above, let's jump into an example baseball game during the middle
+      of the seventh inning. At this point in the game, the following sequence
+      of writes has been produced by the official scorekeeper.
+      </p>
+
+      <ul>
+        <li><code>set("visitors", 0)</code></li>
+        <li><code>set("home", 0)</code></li>
+        <li><code>set("home", 1)</code></li>
+        <li><code>set("visitors", 1)</code></li>
+        <li><code>set("home", 2)</code></li>
+        <li><code>set("home", 3)</code></li>
+        <li><code>set("visitors", 2)</code></li>
+        <li><code>set("home", 4)</code></li>
+        <li><code>set("home", 5)</code></li>
+      </ul>
+
+      <p>
+      This sequence of writes corresponds to the following inning-by-inning
+      line score. We see that the visiting team scored once in the third and
+      fifth inning. The home team scored once in the first, third, and fourth
+      inning and scored twice in the sixth inning. Thus, the visiting team is
+      behind two runs to five. We abbreviate this score as 2-5, visiting team
+      first.
+      </p>
+
       <table id="baseball_scoresheet">
         <tr id="baseball_scoresheet_1">
           <th> </th> <th>1</th> <th>2</th> <th>3</th> <th>4</th>
@@ -360,6 +407,12 @@ end game;</code></pre>
           <td>2</td> <td> </td> <td> </td> <td> </td> <td>5</td>
         </tr>
       </table>
+
+      <p>
+      Now, for each of the six consistency models defined above, we list all
+      the possible scores that could be returned from issuing a
+      <code>get("visitors", "home")</code> request.
+      </p>
 
       <table id="scoresheet_examples">
         <tr>
@@ -416,6 +469,52 @@ end game;</code></pre>
           </td>
         </tr>
       </table>
+
+      <p>
+      A few things to note:
+      </p>
+
+      <ul>
+        <li>
+        With a <em>strongly consistent</em> key-value store, the only possible
+        result is 2-5: the current score of the game.
+        </li>
+
+        <li>
+        With an <em>eventually consistent</em> key-value store, the visiting
+        score can be read as 0, 1, or 2, and the home score can be read as 0,
+        1, 2, 3, 4, or 5. Note that some of the scores read&mdash;like 2-0 or
+        0-5&mdash;were never actually the score of the game at any point in
+        time.
+        </li>
+
+        <li>
+        With a key-value store guaranteeing <em>consistent prefixes</em>, the
+        score that's read may not be the most up-to-date score, but it is
+        guaranteed to have been the score of the game at some point in the
+        past.
+        </li>
+
+        <li>
+        With a key-value store guaranteeing <em>bounded staleness</em> within
+        the last inning, the visiting score must be read as 2 because the
+        visiting team did not score in the sixth inning. The home score can be
+        read as 3, 4, or 5: the three home scores that occurred in the sixth
+        inning.
+        </li>
+
+        <li>
+        After reading 1-3 from a key-value store guaranteeing <em>monotonic
+        reads</em>, the visiting score can be read as 1 or 2, and the home
+        score can be read as 3, 4, or 5.
+        </li>
+
+        <li>
+        Since there is only a single client who updates the score, <em>read my
+        writes</em> is equivalent to strong consistency for the writer and
+        equivalent to eventual consistency for everyone else.
+        </li>
+      </ul>
 
       <h2 id="participants">Read Requirements for Participants</h2>
       <p>TODO</p>
