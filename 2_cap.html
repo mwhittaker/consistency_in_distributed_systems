@@ -4,6 +4,7 @@
 <head>
   <title>Consistency in Distributed Systems</title>
   <link href='style.css' rel='stylesheet'>
+  <link href='svg.css' rel='stylesheet'>
   <meta name=viewport content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="favicon.ico">
 </head>
@@ -23,10 +24,31 @@
           Partition-Tolerant Web Services
         </a>
       </h1>
-      <p>Coming soon.</p>
+
+      <p>
+      In this lecture, we'll define linearizability: a formal consistency model
+      that's often used synonymously with strong consistency. We'll then
+      present and prove the infamous CAP theorem which tells us that
+      partition-tolerant distributed systems have to choose between strong
+      consistency and availability. In other words, we can't have our strongly
+      consistent cake and eat it with high availability too.
+      </p>
+
+      <h2 id="linearizability">Linearizability</h2>
+      <div class="svgbox">
+        <svg viewBox="0 0 400 170" id="test">
+        </svg>
+      </div>
+
+      <h2 id="formal_model">Formal Model</h2>
+      <h2 id="asynch_cap_theorem">The (Asynchronous) CAP Theorem</h2>
+      <h2 id="synch_cap_theorem">The Synchronous CAP Theorem</h2>
     </article>
   </div>
 
+  <script src="snap.svg.js"></script>
+  <script src="linearizable.js"></script>
+  <script src="2_cap.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
