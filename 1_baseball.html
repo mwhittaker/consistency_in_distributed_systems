@@ -34,7 +34,6 @@
       </p>
 
       <h2 id="replication">Replication</h2>
-
       <p>
       Often, distributed storage systems&mdash;like file systems, relational
       databases, or key-value stores&mdash;store a copy of the same data on
@@ -517,7 +516,136 @@ end game;</code></pre>
       </ul>
 
       <h2 id="participants">Read Requirements for Participants</h2>
-      <p>TODO</p>
+      <p>
+      In this section, we'll look at six different people&mdash;a scorekeeper,
+      an umpire, a radio reporter, a sportswriter, a statistician, and a stat
+      watcher&mdash;and discuss the weakest consistency model each person
+      requires. In doing so, we'll see why all six consistency models are
+      useful.
+      </p>
+
+      <h3 id="scorekeeper">Official Scorekeeper</h3>
+      <p>
+      As discussed above, the official scorekeeper is responsible for updating
+      the score whenever the visiting team or home team scores a run. To ensure
+      that the score is always correct, the scorekeeper must read the most
+      up-to-date score just before updating it. This could be accomplished with
+      strong consistency, but since the scorekeeper is the only one who updates
+      the score, read my writes (which in this case is equivalent to strong
+      consistency) suffices.
+      </p>
+
+      <h3 id="umpire">Umpire</h3>
+      <p>
+      The umpire officiates the game. After the top of the ninth inning, the
+      home team finishes the game at bat. If the home team has more runs than
+      the visiting team at this point, then they are guaranteed to win, no
+      matter how poorly they perform in the bottom of the ninth inning. In this
+      event, it is the responsibility of the umpire to end the game early. This
+      responsibility is codified below.
+      </p>
+
+      <pre><code>if first half of 9th inning complete then
+  vScore = get("visitors");
+  hScore = get("home");
+  if vScore < hScore
+    end game;</code></pre>
+
+      <p>
+      In order to decide whether or not to end the game, the umpire needs the
+      current score of the game. Thus, the umpire requires <strong>strong
+      consistency</strong>.
+      </p>
+
+      <h3 id="radio_reporter">Radio Reporter</h3>
+      <p>
+      Every thirty minutes, the radio reporter announces the score of the game
+      over the radio.
+      </p>
+
+      <pre><code>do {
+  vScore = get("visitors");
+  hScore = get("home");
+  report vScore and hScore;
+  sleep(30 minutes);
+}</code></pre>
+
+      <p>
+      The reported score does not have to be up-to-date; listeners are
+      accustomed to hearing out-of-date scores reported on the radio. However,
+      as not to mislead listeners, the radio reporter should not report a score
+      that never actually occurred. Thus, the radio reporter requires
+      <strong>consistent prefix</strong>.
+      </p>
+
+      <p>
+      Moreover, once the radio reporter reports a score, the reporter would
+      look foolish to announce a previous score. For example, it would be a
+      faux pas to announce a score of 2-3 (middle of the fifth inning) and then
+      announce a score of 0-1 (middle of the second inning) 30 minutes later.
+      Thus, the reporter also requires either <strong>monotonic reads</strong>
+      or <strong>30-minute bounded staleness</strong>.
+      </p>
+
+      <h3 id="sportswriter">Sportswriter</h3>
+      <p>
+      The sportswriter is tasked with writing an article about the game after
+      it finishes. A typical sportswriter executes the following pseudocode.
+      </p>
+
+      <pre><code>while not end of game {
+  drink beer;
+  smoke cigar;
+}
+go out to dinner;
+vScore = get("visitors");
+hScore = get("home");
+write article;</code></pre>
+
+      <p>
+      The sportswriter's article must be written with the correct final score.
+      While strong consistency would suffice, the sportswriter can take
+      advantage of a lengthy dinner. If the sportswriter eats for an hour, then
+      <strong>1-hour bounded staleness</strong> is equivalent to strong
+      consistency and meets the sportswriter's needs.
+      </p>
+
+      <h3 id="statistician">Statistician</h3>
+      <p>
+      The statistician, say for the home team, is responsible for recording
+      season-long statistics such as the total number of runs scored. The
+      statistician stores this statistic in the key-value store under the
+      <code>"season-runs"</code> key. A couple hours after each game, the
+      statistician adds the number of runs from the game to the season-long
+      aggregate.
+      </p>
+
+      <pre><code>Wait for end of game;
+score = get("home");
+state = get("season-runs");
+set("season-runs", stat + score);</code></pre>
+
+      <p>
+      As with the sportswriter, the statistician can use <strong>bounded
+      staleness</strong> to read the home score. Since the statistician is
+      the only person who updates the season-long number of runs, the
+      statistician can use <strong>read my writes</strong> to read the latest
+      value of <code>"season-runs"</code>, similar to how to official
+      scorekeeper used read my writes to read the score during the game.
+      </p>
+
+      <h3 id="stat_watcher">Stat Watcher</h3>
+      <p>
+      A stat watcher checks on their team's statistics once every day and
+      discusses them with friends. Because the stat watcher checks the stats
+      infrequently and because reading up-to-date stats is not essential,
+      <strong>eventual consistency</strong> suffices for a stat watcher.
+      </p>
+
+      <pre><code>do {
+stat = get("season-runs");
+discuss stats with friends;
+sleep(1 day);</code></pre>
     </article>
   </div>
 
