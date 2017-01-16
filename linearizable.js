@@ -75,7 +75,7 @@ lin.action_to_string = function(action) {
   } else if (action.type === lin.ActionType.Ret) {
     return action.x;
   } else if (action.type === lin.ActionType.Ok) {
-    return "OK";
+    return "ok";
   } else {
     console.log("Unknown action type: " + action.type);
   }

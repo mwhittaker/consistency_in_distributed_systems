@@ -40,6 +40,7 @@ ds.Node = function(element, name, color) {
 //     duration: [float, float, float],
 //     call:     string,
 //     resp:     string,
+//     state:    string,
 //   }
 ds.ActionType = {
   Delay:   "Delay",
@@ -55,12 +56,13 @@ ds.Delay = function(duration) {
   this.duration = duration;
 }
 
-ds.Message = function(duration, call, resp, to) {
+ds.Message = function(duration, call, resp, to, state) {
   ds.Action.call(this, ds.ActionType.Message);
   this.to = to;
   this.duration = duration;
   this.call = call;
   this.resp = resp;
+  this.state = state;
 }
 
 // A `node_action` represents the actions of a single node. It includes the
@@ -168,6 +170,10 @@ ds.animation_config = function(s, bbox) {
   var action_rotation = -30;
   var action_pad = 2;
 
+  var line_height = 8;
+  var reg_text_pad = 10;
+  var reg_box_pad = 0;
+
   var reset_delay = 5000;
 
   return {
@@ -184,6 +190,9 @@ ds.animation_config = function(s, bbox) {
     client_height: client_height,
     action_rotation: action_rotation,
     action_pad: action_pad,
+    line_height: line_height,
+    reg_text_pad: reg_text_pad,
+    reg_box_pad: reg_box_pad,
     reset_delay: reset_delay,
   };
 }
@@ -219,6 +228,7 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
 
   var client_lines = [];
   var client_texts = [];
+  var states = [];
   var msgs = [];
   for (var i = 0; i < node_actions.length; ++i) {
     var node_action = node_actions[i];
@@ -254,6 +264,29 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
           client_line.addClass("clientline");
           client_line.attr({stroke:node.color});
           client_lines.push(client_line);
+
+          // State.
+          if (action.state != undefined) {
+            // Line.
+            var line_x = x + ((action.duration[0] / duration(action)) * width);
+            var line_y1 = y - (c.line_height / 2);
+            var line_y2 = y + (c.line_height / 2);
+            var line = s.line(line_x, line_y1, line_x, line_y2);
+            line.addClass("dsline");
+
+            // Reg text.
+            var reg_text = s.text(line_x, line_y1-c.reg_text_pad, action.state);
+            reg_text.addClass("linregtext");
+
+            // Reg box.
+            var bbox = reg_text.getBBox();
+            var wh = Math.max(bbox.w, bbox.h) + (2 * c.reg_box_pad);
+            var reg_box = s.rect(bbox.cx - (wh / 2), bbox.cy - (wh / 2), wh, wh);
+            reg_box.addClass("linregbox");
+            reg_box.attr({fill:"transparent"});
+
+            states.push(s.group(line, reg_text, reg_box));
+          }
 
           // Client call.
           var client_call = rottext(s, x, y, action.call,
@@ -299,7 +332,8 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
   var mask_height = c.client_height * node_actions.length;
   var mask = s.rect(x, y, 0, mask_height);
   mask.attr({fill:"white"});
-  group(s, client_lines.concat(client_texts)).attr({mask: mask});
+  var grouped_elements = client_lines.concat(client_texts).concat(states);
+  group(s, grouped_elements).attr({mask: mask});
 
   // Progress line.
   var x1 = c.pad_left + c.client_pad_left;

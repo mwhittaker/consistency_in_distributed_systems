@@ -35,9 +35,122 @@
       </p>
 
       <h2 id="linearizability">Linearizability</h2>
+      <p>
+      In the last lecture, we established (rather informally) that a
+      distributed storage system is strongly consistent if it behaves
+      indistinguishably from a storage system running on a single computer. In
+      this section, we'll fortify our understanding of strong consistency by
+      taking a look at linearizability: a formalism of strong consistency
+      initially proposed by <a
+      href="https://scholar.google.com/scholar?cluster=7860241540823320465">
+      Maurice Herlihy and Jeannette Wing in 1990</a>.
+      </p>
+
+      <p>
+      In the last lecture, the only storage system we looked at was a key-value
+      store. In this lecture, we'll consider an even simpler storage system: a
+      <strong>register</strong>. A register stores a single value.  Clients can
+      issue
+      <ul>
+        <li>
+          a <code>w(x)</code> request to write <code>x</code> to the value or
+        </li>
+        <li>
+          a <code>r()</code> request to read the value.
+        </li>
+      </ul>
+      </p>
+
+      <p>
+      An example interaction between a client (<code>a</code>) and a register
+      (<code>s</code>) running on a single computer is given below. The client
+      first writes the value 7 into the register and then reads it out.
+      </p>
+
       <div class="svgbox">
-        <svg viewBox="0 0 400 170" id="test">
-        </svg>
+        <svg viewBox="0 0 400 102" id="simple_reg"></svg>
+      </div>
+
+      <p>
+      From now on, let's assume that the register running on a single computer
+      can instantaneously process a request and send a response the exact
+      moment the request arrives. With that assumption, let's take a look at
+      how two clients (<code>a</code> and <code>b</code>) might interact with
+      such a register when the network starts to delay and quicken the delivery
+      of messages.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 152" id="async_network"></svg>
+      </div>
+
+      <p>
+      The execution begins as client <code>a</code> sends a very slow
+      <code>w(9)</code> request to the register. Before the <code>w(9)</code>
+      request has a chance to make it to the register, client <code>b</code>
+      sends a very speedy <code>w(4)</code> request. The <code>w(4)</code>
+      request arrives at the register and the response arrives back at client
+      <code>b</code> before client <code>a</code>'s request even has a chance
+      to reach the register. Finally, client <code>a</code>'s write request
+      arrives at the register, writes a value of <code>9</code>, and returns
+      back to client </code>a</code>.
+      </p>
+
+      <p>
+      To make things clearer, we've drawn the contents of the register at the
+      moment each request arrives at the register and takes effect. When the
+      <code>w(4)</code> request takes effect, the register has value
+      <code>4</code>; when the <code>w(9)</code> request takes effect, the
+      register has value <code>9</code>.
+      </p>
+
+      <p>
+      Note that from our god's eye view, we know exactly when each request
+      arrives at the register. Unfortunately, clients don't enjoy such a
+      luxury. A client only knows when it sends its request and when it
+      receives the corresponding response. It doesn't know exactly when the
+      request arrives at the register.
+      </p>
+
+      <p>
+      Let's take a closer look at an execution from the perspective of the
+      clients and note something rather profound. We may not know when requests
+      arrive at the register, but <em>we can guess</em>! That is, for each
+      request, we can guess a time&mdash;between when the request is sent and a
+      response is received&mdash;that the request <em>could have</em> arrived
+      at the register.
+      </p>
+
+      <p>
+      Play around with the following interactive visualization of an execution
+      in which client <code>a</code> sends a <code>w(3)</code> request and then
+      client <code>b</code> sends a <code>r()</code> request. You can click
+      (and drag) on the thick colored bars to place your guess as to when each
+      request arrived at the server.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 112" id="first_guess"></svg>
+      </div>
+
+      <p>
+      In the previous execution, all of our guesses <em>could have been
+      correct</em>. However, this is not always the case. Consider the
+      following execution in which client <code>a</code> and client
+      <code>b</code> concurrently issue write requests before client
+      <code>a</code> issues a read request. Note that some of your guesses
+      <em>cannot possibly be correct</em>.  More specifically, any guess in
+      guess in which client <code>a</code>'s write follows client
+      <code>b</code>'s write cannot possibly be correct because client
+      <code>a</code> later reads <code>8</code>.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 112" id="first_wrong_guess"></svg>
+      </div>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 170" id="test"></svg>
       </div>
 
       <h2 id="formal_model">Formal Model</h2>
@@ -47,6 +160,7 @@
   </div>
 
   <script src="snap.svg.js"></script>
+  <script src="distributed_systems.js"></script>
   <script src="linearizable.js"></script>
   <script src="2_cap.js"></script>
   <script>
