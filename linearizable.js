@@ -23,8 +23,8 @@ lin.colors = [
   lin.Color.Red,
   lin.Color.Blue,
   lin.Color.Green,
-  lin.Color.Yellow,
   lin.Color.Purple,
+  lin.Color.Yellow,
 ];
 
 // type ActionType =
@@ -69,11 +69,11 @@ lin.Ok = function() {
 
 lin.action_to_string = function(action) {
   if (action.type === lin.ActionType.Write) {
-    return "W(" + action.x + ")";
+    return "w(" + action.x + ")";
   } else if (action.type === lin.ActionType.Read) {
-    return "R()";
+    return "r()";
   } else if (action.type === lin.ActionType.Ret) {
-    return action.x;
+    return "" + action.x;
   } else if (action.type === lin.ActionType.Ok) {
     return "ok";
   } else {
@@ -351,6 +351,7 @@ lin.make_callback = function(s, events, init) {
     });
 
     var linearizable = true;
+    var x = init;
     for (var i = 0; i < events.length; ++i) {
       var e = events[i];
 

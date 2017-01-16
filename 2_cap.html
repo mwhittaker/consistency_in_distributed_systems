@@ -40,8 +40,8 @@
       distributed storage system is strongly consistent if it behaves
       indistinguishably from a storage system running on a single computer. In
       this section, we'll fortify our understanding of strong consistency by
-      taking a look at linearizability: a formalism of strong consistency
-      initially proposed by <a
+      taking a look at <strong>linearizability</strong>: a formalism of strong
+      consistency initially proposed by <a
       href="https://scholar.google.com/scholar?cluster=7860241540823320465">
       Maurice Herlihy and Jeannette Wing in 1990</a>.
       </p>
@@ -116,9 +116,9 @@
       Let's take a closer look at an execution from the perspective of the
       clients and note something rather profound. We may not know when requests
       arrive at the register, but <em>we can guess</em>! That is, for each
-      request, we can guess a time&mdash;between when the request is sent and a
-      response is received&mdash;that the request <em>could have</em> arrived
-      at the register.
+      request, we can guess a time&mdash;between when the request is sent and
+      when a response is received&mdash;that the request <em>could have</em>
+      arrived at the register.
       </p>
 
       <p>
@@ -130,28 +130,110 @@
       </p>
 
       <div class="svgbox">
-        <svg viewBox="0 0 400 112" id="first_guess"></svg>
+        <svg viewBox="0 0 400 110" id="first_guess"></svg>
       </div>
 
       <p>
-      In the previous execution, all of our guesses <em>could have been
+      In the previous execution, all of your guesses <em>could have been
       correct</em>. However, this is not always the case. Consider the
       following execution in which client <code>a</code> and client
-      <code>b</code> concurrently issue write requests before client
+      <code>b</code> concurrently issue write requests after which client
       <code>a</code> issues a read request. Note that some of your guesses
-      <em>cannot possibly be correct</em>.  More specifically, any guess in
-      guess in which client <code>a</code>'s write follows client
-      <code>b</code>'s write cannot possibly be correct because client
-      <code>a</code> later reads <code>8</code>.
+      <em>cannot possibly be correct</em>.
       </p>
 
       <div class="svgbox">
-        <svg viewBox="0 0 400 112" id="first_wrong_guess"></svg>
+        <svg viewBox="0 0 400 110" id="first_wrong_guess"></svg>
+      </div>
+
+      <p>
+      More specifically, any guess in which client <code>b</code>'s
+      <code>w(8)</code> request follows client <code>a</code>'s
+      <code>w(2)</code> request cannot possibly be correct because after both
+      the writes, client <code>a</code> reads a value of <code>2</code>. This
+      means that even though we don't know exactly when the requests arrive at
+      the register, we do know that the <code>w(2)</code> request must arrive
+      after the <code>w(8)</code> request.
+      </p>
+
+      <p>
+      For read requests, note that we've shaded the value of the register red
+      whenever the register's value is inconsistent with the value returned by
+      the read request. For example, client <code>a</code>'s read request above
+      returns <code>2</code>, so the final state of the register is shaded red
+      whenever its value is anything other than <code>2</code> (e.g.
+      <code>8</code>).
+      </p>
+
+      <p>
+      If any of the registers in our execution are shaded red, then our guess
+      can not possibly be correct. This is bad. If all of the registers are
+      green, then our guess could be correct. This is good. Try to find a
+      potentially correct guess for the following executions.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 160" id="challenge_one"></svg>
       </div>
 
       <div class="svgbox">
-        <svg viewBox="0 0 400 170" id="test"></svg>
+        <svg viewBox="0 0 400 210" id="challenge_two"></svg>
       </div>
+
+      <p>
+      At this point, we've seen an execution in which all guesses were
+      potentially correct. We've also seen a few executions in which some
+      guesses were potentially correct and some were definitely incorrect. Now
+      try to find a potentially correct guess for the following execution.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 160" id="no_good_guess"></svg>
+      </div>
+
+      <p>
+      Alas, all guesses are incorrect; there is no potentially correct guess!
+      That is, there does not exist a way for us to guess the moment that each
+      request arrives at the register such that the guess is consistent with
+      the responses of all the read requests. Thus, this execution could not
+      have taken place with a register running on a single computer. Instead,
+      we have deduced that the register must be replicated on multiple
+      computers. In other words, we were able to distinguish the behavior of
+      the register from the behavior of a register running on a single computer!
+      </p>
+
+      <p>
+      Surprise, this is linearizability!
+      </p>
+
+      <p>
+      For a given execution, if there exists a potentially correct guess, then
+      we say the execution is linearizable. If all guesses are definitely
+      incorrect, then we say the execution is not linearizable. Similarly, a
+      <strong>linearizable register</strong> is one that only allows
+      linearizable executions.
+      </p>
+
+      <p>
+      If a (potentially replicated) register is linearizable, then every
+      interaction with it is indistinguishable from an interaction with a
+      register running on a single computer in which the requests arrive at the
+      single-computer register according to one of our potentially correct
+      guesses. If a replicated register is not linearizable, then there are
+      some interactions with it that could not possibly occur with a
+      single-computer register.
+      </p>
+
+      <p>
+      Thus far, we've only discussed linearizability in the context of a
+      register, but linearizability can be extended quite naturally to deal
+      with many other types of objects (e.g. queues, sets). This generalization
+      of linearizability, as well as a full formalization, can be found in
+      Herlihy and Wing's 1990 paper: <a
+      href="https://scholar.google.com/scholar?cluster=7860241540823320465">
+      <em>Linearizability: A Correctness Condition for Concurrent
+      Objects</em></a>.
+      </p>
 
       <h2 id="formal_model">Formal Model</h2>
       <h2 id="asynch_cap_theorem">The (Asynchronous) CAP Theorem</h2>

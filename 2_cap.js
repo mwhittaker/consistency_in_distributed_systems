@@ -58,13 +58,68 @@ function first_wrong_guess() {
     {name: a, action: new lin.Ok()},
     {name: b, action: new lin.Ok()},
     {name: a, action: new lin.Read()},
-    {name: a, action: new lin.Ret(8)},
+    {name: a, action: new lin.Ret(2)},
   ];
   lin.animate(s, names, named_actions, 0);
 }
 
-function linear() {
-  var s = Snap("#test");
+function challenge_one() {
+  var s = Snap("#challenge_one");
+  var a = "a";
+  var b = "b";
+  var c = "c";
+  var names = [a, b, c];
+  var named_actions = [
+    {name: a, action: new lin.Write(0)},
+    {name: b, action: new lin.Write(1)},
+    {name: c, action: new lin.Write(0)},
+    {name: c, action: new lin.Ok()},
+    {name: c, action: new lin.Read()},
+    {name: c, action: new lin.Ret(1)},
+    {name: c, action: new lin.Write(1)},
+    {name: c, action: new lin.Ok()},
+    {name: a, action: new lin.Ok()},
+    {name: b, action: new lin.Ok()},
+    {name: b, action: new lin.Write(1)},
+    {name: a, action: new lin.Read()},
+    {name: b, action: new lin.Ok()},
+    {name: a, action: new lin.Ret(0)},
+  ];
+  lin.animate(s, names, named_actions, "?");
+}
+
+function challenge_two() {
+  var s = Snap("#challenge_two");
+  var a = "a";
+  var b = "b";
+  var c = "c";
+  var d = "d";
+  var names = [a, b, c, d];
+  var named_actions = [
+    {name: b, action: new lin.Write(1)},
+    {name: d, action: new lin.Write(0)},
+    {name: a, action: new lin.Write(0)},
+    {name: d, action: new lin.Ok()},
+    {name: d, action: new lin.Read()},
+    {name: c, action: new lin.Write(1)},
+    {name: d, action: new lin.Ret(1)},
+    {name: d, action: new lin.Write(1)},
+    {name: d, action: new lin.Ok()},
+    {name: d, action: new lin.Read()},
+    {name: d, action: new lin.Ret(0)},
+    {name: c, action: new lin.Ok()},
+    {name: d, action: new lin.Write(0)},
+    {name: d, action: new lin.Ok(0)},
+    {name: d, action: new lin.Read()},
+    {name: b, action: new lin.Ok()},
+    {name: d, action: new lin.Ret(1)},
+    {name: a, action: new lin.Ok()},
+  ];
+  lin.animate(s, names, named_actions, "?");
+}
+
+function no_good_guess() {
+  var s = Snap("#no_good_guess");
   var a = "a";
   var b = "b";
   var c = "c";
@@ -74,14 +129,14 @@ function linear() {
     {name: a, action: new lin.Ok()},
     {name: b, action: new lin.Write(1)},
     {name: a, action: new lin.Read()},
-    {name: a, action: new lin.Ret(0)},
+    {name: a, action: new lin.Ret(1)},
     {name: c, action: new lin.Write(0)},
     {name: c, action: new lin.Ok()},
     {name: b, action: new lin.Ok()},
     {name: b, action: new lin.Read()},
     {name: b, action: new lin.Ret(1)},
   ];
-  lin.animate(s, names, named_actions, 0);
+  lin.animate(s, names, named_actions, "?");
 }
 
 function main() {
@@ -89,7 +144,9 @@ function main() {
   async_network();
   first_guess();
   first_wrong_guess();
-  linear();
+  challenge_one();
+  challenge_two();
+  no_good_guess();
 }
 
 window.onload = main;
