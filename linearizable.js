@@ -211,6 +211,7 @@ lin.render_names = function(s, names) {
     var y = c.pad_top + ((i + 1) * c.node_height);
     var name = s.text(x, y, names[i]);
     name.addClass("clientname");
+    name.addClass("noselect");
     name_index[names[i]] = name;
   }
 
@@ -244,10 +245,12 @@ lin.render_event = function(s, dx, names, e) {
   // Call text.
   e.call_text = s.text(x1, y - c.call_text_pad, lin.action_to_string(e.call));
   e.call_text.addClass("lincalltext");
+  e.call_text.addClass("noselect");
 
   // Resp text.
   e.resp_text = s.text(x2, y - c.resp_text_pad, lin.action_to_string(e.resp));
   e.resp_text.addClass("lincalltext");
+  e.resp_text.addClass("noselect");
 
   // Line.
   var line_x = x1 + (dx / 2);
@@ -259,6 +262,7 @@ lin.render_event = function(s, dx, names, e) {
   // Reg text.
   e.reg_text = s.text(line_x, line_y1 - c.reg_text_pad, "0");
   e.reg_text.addClass("linregtext");
+  e.reg_text.addClass("noselect");
 
   // Reg box.
   var bbox = e.reg_text.getBBox();
@@ -306,10 +310,11 @@ lin.register_event_handlers = function(s, events, callback) {
         };
     }(evt);
 
-    evt.bar.node.onclick = function(evt) {
+    evt.bar.node.onmousedown = function(evt) {
       return function(e) {
         var loc = cursor_point(e);
         lin.move_event(s, evt, loc.x);
+        evt.clicked = true;
         callback();
       };
     }(evt);
