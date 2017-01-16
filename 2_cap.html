@@ -235,9 +235,49 @@
       Objects</em></a>.
       </p>
 
-      <h2 id="formal_model">Formal Model</h2>
-      <h2 id="asynch_cap_theorem">The (Asynchronous) CAP Theorem</h2>
-      <h2 id="synch_cap_theorem">The Synchronous CAP Theorem</h2>
+      <h2 id="formal_model">Consistency, Availability, and Partition-Tolerance</h2>
+      <p>
+      The CAP theorem states that a partition-tolerant replicated register
+      cannot be both consistent and available. In order to understand (and
+      prove) the CAP theorem, we first have to define the words
+      <em>consistent</em>, <em>available</em>, and <em>partition-tolerant</em>.
+      </p>
+
+      <p>
+      <strong>Consistent.</strong> The CAP theorem uses the word
+      <em>consistent</em> as a synonym for <em>linearizable</em>. Thanks to the
+      last section, we already understand what it means for a replicated
+      register to be linearizable.
+      </p>
+
+      <p>
+      <strong>Available.</strong> A replicated register is available if every
+      request sent to a non-failed replica eventually produces a response. In
+      other words, whenever a non-failed replica receives a request (e.g.
+      <code>w(9)</code>) from a client, it eventually has to send a response
+      (e.g. <code>ok</code>) back to the client. The replica is allowed to take
+      as long as it wants before responding to the client, but it is
+      <em>not</em> allowed to ignore the request indefinitely.
+      </p>
+
+      <p>
+      <strong>Partition-tolerant.</strong> The CAP theorem assumes that, at any
+      time, replicas can be temporarily partitioned from one another and that
+      any messages sent between the two partitions are lost. Effectively, this
+      means that the network can drop arbitrary messages sent from any replica
+      to any other replica at any time. If a replicated register behaves
+      correctly despite the possibility of arbitrary message loss, we say it is
+      partition-tolerant.
+      </p>
+
+      <h2 id="cap_theorem">The CAP Theorem</h2>
+      <!--TODO(mwhittaker): Prove the CAP theorem.-->
+
+      <h2 id="implications">Implications of the CAP Theorem</h2>
+      <!--TODO(mwhittaker): Explain that the CAP theorem is the reason we need
+      weak consistency in the first place. Discuss how systems are forced to
+      choose between strong and weak consistency. Give examples of such
+      systems. -->
     </article>
   </div>
 
