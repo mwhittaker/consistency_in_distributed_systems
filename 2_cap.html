@@ -235,7 +235,9 @@
       Objects</em></a>.
       </p>
 
-      <h2 id="formal_model">Consistency, Availability, and Partition-Tolerance</h2>
+      <h2 id="consistency_availability_and_partition-tolerance">
+        Consistency, Availability, and Partition-Tolerance
+      </h2>
       <p>
       The CAP theorem states that a partition-tolerant replicated register
       cannot be both consistent and available. In order to understand (and
@@ -270,7 +272,7 @@
       partition-tolerant.
       </p>
 
-      <h2 id="cap_theorem">Proving The CAP Theorem</h2>
+      <h2 id="proving_the_cap_theorem">Proving The CAP Theorem</h2>
       <p>
       To reiterate, the CAP theorem states that a partition-tolerant replicated
       register cannot be both consistent and available. Now that we've
@@ -281,12 +283,12 @@
       </p>
 
       <p>
-      Assume for contradiction there exists a consistent, available, and
-      fault-tolerance replicated register and partition the replicas in two.
-      For simplicity (and without loss of generality), consider a replicated
-      register with exactly two replicas (<code>s1</code> and <code>s2</code>).
-      Assume the register has an initial value of 0 and consider the following
-      execution which the replicated register cannot prevent.
+      Assume for contradiction that there exists a consistent, available, and
+      fault-tolerant replicated register. Also assume the replicas are
+      partitioned in two.  For simplicity (and without loss of generality),
+      consider a replicated register with exactly two replicas (<code>s1</code>
+      and <code>s2</code>).  Assume the register has an initial value of 0 and
+      consider the following execution.
       </p>
 
       <div class="svgbox">
@@ -319,11 +321,52 @@
       proves the theorem!
       <p>
 
-      <h2 id="implications">Implications of the CAP Theorem</h2>
-      <!--TODO(mwhittaker): Explain that the CAP theorem is the reason we need
-      weak consistency in the first place. Discuss how systems are forced to
-      choose between strong and weak consistency. Give examples of such
-      systems. -->
+      <h2 id="implications_of_the_cap_theorem">
+        Implications of the CAP Theorem
+      </h2>
+      <p>
+      The CAP theorem proves that there is a fundamental trade-off between
+      strong consistency and availability. A distributed system must choose
+      between being strongly consistent and being highly available.
+      </p>
+
+      <p>
+      Shortly after Eric Brewer proposed the CAP theorem in his
+      <a href="https://scholar.google.com/scholar?cluster=14938038383922609098">
+        2000 PODC keynote</a>, there was a Cambrian explosion of systems that
+      chose high availability over strong consistency:
+      <a href="https://scholar.google.com/scholar?cluster=5432858092023181552">
+        Amazon's Dynamo</a>,
+      <a href="https://scholar.google.com/scholar?cluster=535416719812038974">
+        Google's BigTable</a>, and
+      <a href="https://scholar.google.com/scholar?cluster=9829178954647343079">
+        Facebook's Cassandra</a> to name a few. More recently, there has a
+      resurgence of systems that choose strong consistency over availability:
+      <a href="https://scholar.google.com/scholar?cluster=3523173873845838643">
+        Google's Spanner</a>,
+      <a href="https://scholar.google.com/scholar?cluster=15754405687028247503">
+        Stanford's RAMCloud</a>, and
+      <a href="https://scholar.google.com/scholar?cluster=8838739194584316753">
+        Cornell's Hyperdex</a> for example.
+      </p>
+
+      <p>
+      Furthermore,
+      <a href="https://scholar.google.com/scholar?cluster=4480351479446148866">
+        corollaries of the CAP theorem</a> show that there are also fundamental
+      trade-offs between consistency and latency. Even when the network is not
+      partitioned, strongly consistent storage systems run with more latency
+      that their weakly consistent counterparts.
+      </p>
+
+      <p>
+      The trade-offs detailed by the CAP theorem and its corollaries are the
+      reason that there are so many varying consistency models (including the
+      six we saw last lecture). Each consistency model represents one point in
+      a complex spectrum trading off consistency, availability, latency,
+      complexity, and so on. With this smorgasbord of consistency models,
+      systems are free to choose the one that suits their needs best.
+      </p>
     </article>
   </div>
 
