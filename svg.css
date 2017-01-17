@@ -48,6 +48,12 @@ svg .msg {
   r: 6;
 }
 
+svg .partition {
+  stroke: black;
+  stroke-width: 2;
+  fill: transparent;
+}
+
 svg .dsline {
   stroke: black;
   stroke-width: 2;

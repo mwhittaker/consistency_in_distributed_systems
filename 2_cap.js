@@ -139,6 +139,76 @@ function no_good_guess() {
   lin.animate(s, names, named_actions, "?");
 }
 
+function cap() {
+  var s = Snap("#cap");
+
+  var s1_x = 275;
+  var s1_y = 20;
+  var s2_x = 275;
+  var s2_y = 160;
+
+  var partition_center = "M215 95";
+  var partition = s.path("M215 95 " + "l10 -10 l10 10".repeat(6));
+  partition.addClass("partition");
+
+  var s1_mask = s.path("M" + s1_x + " " + s1_y + " h-10 v65 l10 10 l10 -10 v-65 z");
+  s1_mask.attr({stroke:"black", fill:"white"});
+
+  var s2_mask = s.path("M" + s2_x + " " + s2_y + " h-10 v-75 l10 10 l10 -10 v75 z");
+  s2_mask.attr({stroke:"black", fill:"white"});
+
+  var num_messages = 3;
+  var s1_messages = [];
+  var s2_messages = [];
+  for (var i = 0; i < num_messages; ++i) {
+    var s1_msg = s.circle(s1_x, s1_y, 0);
+    s1_msg.addClass("msg");
+    s1_msg.attr({fill: ds.Color.Blue});
+    s1_messages.push(s1_msg);
+
+    var s2_msg = s.circle(s2_x, s2_y, 0);
+    s2_msg.addClass("msg");
+    s2_msg.attr({fill: ds.Color.Blue});
+    s2_messages.push(s2_msg);
+  }
+  s.group.apply(s, s1_messages).attr({mask:s1_mask});
+  s.group.apply(s, s2_messages).attr({mask:s2_mask});
+
+  var a = ds.node(s, 125, 90, "a", ds.Color.Red);
+  var s1 = ds.node(s, s1_x, s1_y, "s1", ds.Color.Blue);
+  var s2 = ds.node(s, s2_x, s2_y, "s2", ds.Color.Blue);
+  var bbox = s.group(a.element, s1.element, s2.element).getBBox();
+
+  var a_actions = new ds.NodeAction("a", [
+    new ds.Message([1, 3, 1], "w(9)", "ok", "s1"),
+    new ds.Delay(1),
+    new ds.Message([1, 3, 1], "r()", "0", "s2"),
+  ], true);
+
+  ds.animate(s, bbox, [a, s1, s2], [a_actions], 2000, function(t) {
+    var cys = [s1_y, s2_y];
+    var dirs = [1, -1];
+    var delays = [1, 7];
+    var s12_messages = [s1_messages, s2_messages];
+
+    for (var j = 0; j < delays.length; ++j) {
+      var cy = cys[j];
+      var dir = dirs[j];
+      var delay = delays[j];
+      var messages = s12_messages[j];
+
+      for (var i = 0; i < messages.length; ++i) {
+        if (delay + i <= t && t <= delay + i + 1) {
+          var dy = (t - delay - i) * 206;
+          messages[i].attr({cy:cy + (dy * dir)});
+        } else {
+          messages[i].attr({cy:cy});
+        }
+      };
+    }
+  });
+}
+
 function main() {
   simple_reg();
   async_network();
@@ -147,6 +217,7 @@ function main() {
   challenge_one();
   challenge_two();
   no_good_guess();
+  cap();
 }
 
 window.onload = main;

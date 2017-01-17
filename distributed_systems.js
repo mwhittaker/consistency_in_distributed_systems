@@ -217,7 +217,7 @@ ds.max_duration = function(node_actions) {
 //   - nodes: ds.Node list
 //   - actions: (name, ds.Action list) list
 //   - invspeed: float
-ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
+ds.animate = function(s, bbox, nodes, node_actions, invspeed, callback) {
   // Metadata.
   var c = ds.animation_config(s, bbox);
   var max_duration = ds.max_duration(node_actions);
@@ -385,6 +385,9 @@ ds.animate = function(s, bbox, nodes, node_actions, invspeed) {
           var cy = msg.y2 + (dy * fraction);
           msg.element.attr({cx:cx, cy:cy});
         }
+      }
+      if (callback !== undefined) {
+        callback(msg_time);
       }
     }, max_duration * invspeed, function() {
       window.setTimeout(function() {

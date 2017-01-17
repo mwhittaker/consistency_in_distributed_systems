@@ -270,8 +270,54 @@
       partition-tolerant.
       </p>
 
-      <h2 id="cap_theorem">The CAP Theorem</h2>
-      <!--TODO(mwhittaker): Prove the CAP theorem.-->
+      <h2 id="cap_theorem">Proving The CAP Theorem</h2>
+      <p>
+      To reiterate, the CAP theorem states that a partition-tolerant replicated
+      register cannot be both consistent and available. Now that we've
+      established the definitions of <em>consistent</em>, <em>available</em>,
+      and <em>partition-tolerant</em>, we're ready to prove the theorem! Note
+      that even though the CAP theorem is hugely far-reaching and influential,
+      we think you'll find the proof remarkably simple.
+      </p>
+
+      <p>
+      Assume for contradiction there exists a consistent, available, and
+      fault-tolerance replicated register and partition the replicas in two.
+      For simplicity (and without loss of generality), consider a replicated
+      register with exactly two replicas (<code>s1</code> and <code>s2</code>).
+      Assume the register has an initial value of 0 and consider the following
+      execution which the replicated register cannot prevent.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 242" id="cap"></svg>
+      </div>
+
+      <p>
+      Our client (<code>a</code>) begins by issuing a <code>w(9)</code> request
+      to <code>s1</code>. When <code>s1</code> receives the request, it
+      repeatedly attempts to send a message to <code>s2</code>, but alas the
+      partition drops all the messages. By our assumption of availability,
+      <code>s1</code> eventually writes <code>9</code> to the register and
+      returns a response to the client.
+      </p>
+
+      <p>
+      Then, the client sends a <code>r()</code> request to <code>s2</code>: the
+      other replica. As before, <code>s2</code> tries repeatedly to send a
+      message to <code>s1</code>, but the partition prevents it. Again by the
+      assumption of availability, <code>s2</code> must eventually return to the
+      client. Since <code>s2</code> has not been able to communicate with
+      <code>s1</code> at all, the value of its register is still the initial
+      value of <code>0</code>.
+      </p>
+
+      </p>
+      The client wrote <code>9</code> to the register but then read back
+      <code>0</code>. This execution is not linearizable, and thus the register
+      is not linearizable. This violates our assumption of consistency and
+      proves the theorem!
+      <p>
 
       <h2 id="implications">Implications of the CAP Theorem</h2>
       <!--TODO(mwhittaker): Explain that the CAP theorem is the reason we need
