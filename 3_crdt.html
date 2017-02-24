@@ -4,6 +4,7 @@
 <head>
   <title>Consistency in Distributed Systems</title>
   <link href='style.css' rel='stylesheet'>
+  <link href='3_crdt.css' rel='stylesheet'>
   <meta name=viewport content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="favicon.ico">
 </head>
@@ -19,10 +20,28 @@
     <article>
       <h1 id="baseball" class="lecturetitle">
         <a href="https://scholar.google.com/scholar?cluster=4496511741683930603">
-          Conflict-free Replicated Data Types
+          Conflict-Free Replicated Data Types
         </a>
       </h1>
       <p>Coming soon!</p>
+
+      <h2 id="formalizing_eventual_consistency">
+        Formalizing Eventual Consistency
+      </h2>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 200" id="test">
+        </svg>
+      </div>
+
+      <h2 id="semilattices">Semilattices</h2>
+
+      <h2 id="crdts">CRDTs</h2>
+      <h3 id="g_counter">G-Counter</h3>
+      <h3 id="pn_counter">PN-Counter</h3>
+      <h3 id="g_set">G-Set</h3>
+      <h3 id="2p_set">2P-Set</h3>
+      <h3 id="or_set">OR-Set</h3>
 
       <p>
       Rough outline:
@@ -51,6 +70,9 @@
     </article>
   </div>
 
+  <script src="snap.svg.js"></script>
+  <script src="state_based_replication.js"></script>
+  <script src="3_crdt.js"></script>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

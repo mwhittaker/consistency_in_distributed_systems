@@ -1,0 +1,46 @@
+.svgbox {
+  margin-bottom: 1.15em;
+}
+
+svg {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+svg .node_label {
+  font-size: 12pt;
+  font-family: monospace;
+}
+
+svg .node_axis {
+  stroke: gray;
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+
+svg .node_state_text {
+  font-family: monospace;
+  font-size: 8pt;
+  text-anchor: middle;
+  alignment-baseline: central;
+}
+
+svg .node_state_circle {
+  r: 10;
+  fill: white;
+  stroke: black;
+  stroke-width: 1;
+}
+
+svg .edge_line {
+  stroke: black;
+  stroke-width: 1;
+}
+
+svg .edge_text {
+  font-family: monospace;
+  font-size: 8pt;
+}
