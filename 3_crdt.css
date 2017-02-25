@@ -19,6 +19,10 @@
   border: 1pt solid black;
 }
 
+.srtable_hover_table {
+  background-color: rgb(253, 253, 150);
+}
+
 svg {
   margin-left: auto;
   margin-right: auto;
@@ -40,14 +44,21 @@ svg .node_axis {
 
 svg .node_state_text {
   font-family: monospace;
-  font-size: 8pt;
+  font-size: 10pt;
   text-anchor: middle;
   alignment-baseline: central;
 }
 
 svg .node_state_circle {
-  r: 10;
+  r: 15;
   fill: white;
+  stroke: black;
+  stroke-width: 1;
+}
+
+svg .node_state_circle_hovered {
+  r: 15;
+  fill: rgb(253, 253, 150);
   stroke: black;
   stroke-width: 1;
 }
@@ -59,5 +70,5 @@ svg .edge_line {
 
 svg .edge_text {
   font-family: monospace;
-  font-size: 8pt;
+  font-size: 10pt;
 }

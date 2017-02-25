@@ -60,8 +60,12 @@ sr.add_header = function(t, xs) {
   }
 }
 
-sr.add_row = function(t, xs) {
+sr.add_row = function(t, id, xs, mouse_enter, mouse_leave) {
   var row = t.insertRow();
+  row.id = id;
+  row.addEventListener("mouseenter", mouse_enter(row));
+  row.addEventListener("mouseleave", mouse_leave(row));
+
   for (var i = 0; i < xs.length; ++i) {
     var td = document.createElement("td");
     td.appendChild(xs[i]);
@@ -109,11 +113,11 @@ sr.StateInfo = function(index, state, query, history) {
 // Internal Types
 ////////////////////////////////////////////////////////////////////////////////
 // type State = {
-//   name:   Name
-//   n:      int,
-//   index:  int,
-//   text:   Snap.text
-//   circle: Snap.circle
+//   name:    Name
+//   n:       int,
+//   index:   int,
+//   text:    Snap.text
+//   circle:  Snap.circle
 // }
 sr.State = function(name, n, index, text, circle) {
   this.name = name;
@@ -163,11 +167,12 @@ sr.max_state_index = function(names, states) {
 }
 
 // - s: Snap.paper
+// - t: table Element
 // - c: Config
 // - i: int
 // - name: Name
 // - state_indexes: [int]
-sr.render_node_timeline = function(s, c, i, name, state_indexes) {
+sr.render_node_timeline = function(s, t, c, i, name, state_indexes) {
   var label_x = c.left_to_label;
   var label_y = c.top_margin + (i * c.timeline_height);
   var label = s.text(label_x, label_y, name);
@@ -189,11 +194,30 @@ sr.render_node_timeline = function(s, c, i, name, state_indexes) {
     var state_dx = (state_index / c.max_state_index) * no_border_axis_width;
     var state_x = axis_x1 + c.axis_to_first_node + state_dx;
     var state_y = axis_y;
+    var state_name = name + j;
 
     var state_circle = s.circle(state_x, state_y, 0);
     state_circle.addClass("node_state_circle");
-    var state_text = s.text(state_x, state_y, name + j);
+    var state_text = s.text(state_x, state_y, state_name);
     state_text.addClass("node_state_text");
+
+    var hover_in = function(row_id, circle) {
+      return function() {
+        t.querySelector(row_id).classList.add("srtable_hover_table");
+        circle.removeClass("node_state_circle");
+        circle.addClass("node_state_circle_hovered");
+      }
+    }("#" + state_name, state_circle);
+    var hover_out = function(row_id, circle) {
+      return function() {
+        t.querySelector(row_id).classList.remove("srtable_hover_table");
+        circle.removeClass("node_state_circle_hovered");
+        circle.addClass("node_state_circle");
+      };
+    }("#" + state_name, state_circle);
+
+    state_circle.hover(hover_in, hover_out);
+    state_text.hover(hover_in, hover_out);
     states.push(new sr.State(name, j, state_index, state_text, state_circle));
   }
 
@@ -216,12 +240,30 @@ sr.render_table = function(t, names, node_timelines, state_infos) {
     for (var j = 0; j < timeline.states.length; ++j) {
       var state = timeline.states[j];
       var info = infos[state.n];
-      sr.add_row(t, [
+      var mouse_enter = function(circle) {
+        return function(row) {
+          return function() {
+            row.classList.add("srtable_hover_table");
+            circle.removeClass("node_state_circle");
+            circle.addClass("node_state_circle_hovered");
+          };
+        };
+      }(state.circle);
+      var mouse_leave = function(circle) {
+        return function(row) {
+          return function() {
+            row.classList.remove("srtable_hover_table");
+            circle.addClass("node_state_circle");
+            circle.removeClass("node_state_circle_hovered");
+          };
+        };
+      }(state.circle);
+      sr.add_row(t, name + state.n, [
         sr.code_with_class("name_td", name + state.n),
         info.state,
         info.query,
         info.history
-      ]);
+      ], mouse_enter, mouse_leave);
     }
   }
 }
@@ -271,7 +313,7 @@ sr.render = function(s, t, names, state_infos, edges) {
 
   var c = {
     svg_width: s.attr("viewBox").width,
-    top_margin: 20,
+    top_margin: 25,
     timeline_height: 50,
     left_to_label: 10,
     label_to_axis: 10,
@@ -284,7 +326,7 @@ sr.render = function(s, t, names, state_infos, edges) {
   var node_timelines = {}
   for (var i = 0; i < names.length; ++i) {
     var name = names[i];
-    var tl = sr.render_node_timeline(s, c, i, name, state_indexes[name]);
+    var tl = sr.render_node_timeline(s, t, c, i, name, state_indexes[name]);
     node_timelines[name] = tl;
   }
 
