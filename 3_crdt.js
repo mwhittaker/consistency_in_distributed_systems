@@ -38,16 +38,43 @@ function simple_update() {
   var names = [a];
   var states = {
     a: [
-      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
-      new sr.StateInfo(1, avg(1, 1), code(1), code("{u0}")),
-      new sr.StateInfo(2, avg(3, 2), code(1.5), code("{u0, u1}")),
-      new sr.StateInfo(3, avg(6, 3), code(2), code("{u0, u1, u2}")),
+      new sr.StateInfo(0, avg(0, 0), code(0),   code("{}")),
+      new sr.StateInfo(1, avg(1, 1), code(1),   code("{0}")),
+      new sr.StateInfo(2, avg(3, 2), code(1.5), code("{0, 1}")),
+      new sr.StateInfo(3, avg(6, 3), code(2),   code("{0, 1, 2}")),
     ],
   };
   var edges = [
-    new sr.Edge(a, 0, a, 1, "u0(1)"),
-    new sr.Edge(a, 1, a, 2, "u1(2)"),
-    new sr.Edge(a, 2, a, 3, "u2(3)"),
+    new sr.Edge(a, 0, a, 1, "u(1)", "0"),
+    new sr.Edge(a, 1, a, 2, "u(2)", "1"),
+    new sr.Edge(a, 2, a, 3, "u(3)", "2"),
+  ];
+  sr.render(s, t, names, states, edges);
+}
+
+function simple_merge() {
+  var s = Snap("#simple_merge_svg");
+  var t = document.getElementById("simple_merge_table")
+  var a = "a";
+  var b = "b";
+
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{0}")),
+      new sr.StateInfo(2, avg(6, 2), code(3), code("{0,2}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{1}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(4)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "m(b1)", "2"),
+    new sr.Edge(b, 1, a, 2, "m(b1)", "2"),
   ];
   sr.render(s, t, names, states, edges);
 }
@@ -123,6 +150,7 @@ function chaotic() {
 
 function main() {
   simple_update();
+  simple_merge();
   chaotic_replication();
   // chaotic();
 }

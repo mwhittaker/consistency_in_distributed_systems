@@ -87,13 +87,15 @@ sr.add_row = function(t, id, xs, mouse_enter, mouse_leave) {
 //   dst_name:  Name,
 //   dst_state: int,
 //   msg:       string,
+//   id:        string,
 // }
-sr.Edge = function(src_name, src_state, dst_name, dst_state, msg) {
+sr.Edge = function(src_name, src_state, dst_name, dst_state, msg, id) {
   this.src_name = src_name;
   this.src_state = src_state;
   this.dst_name = dst_name;
   this.dst_state = dst_state;
   this.msg = msg;
+  this.id = id;
 }
 
 // type StateInfo = {
@@ -293,7 +295,12 @@ sr.render_edge = function(s, c, node_timelines, edge) {
   var text = s.text(0, 0, edge.msg);
   text.addClass("edge_text");
   var path = sr.text_path_along_line(text, line_x1, line_y1, line_x2, line_y2);
-  text.attr({textpath: path});
+  text.attr({textpath: path, dy:-c.edge_margin_top});
+
+  var id = s.text(0, 0, edge.id);
+  id.addClass("edge_id");
+  var path = sr.text_path_along_line(id, line_x1, line_y1, line_x2, line_y2);
+  id.attr({textpath: path, dy:id.getBBox().h + c.edge_margin_bottom});
 
   return new sr.DrawnEdge(edge, line, text);
 }
@@ -316,12 +323,14 @@ sr.render = function(s, t, names, state_infos, edges) {
   var c = {
     svg_width: s.attr("viewBox").width,
     top_margin: 25,
-    timeline_height: 50,
+    timeline_height: 100,
     left_to_label: 10,
     label_to_axis: 10,
     axis_to_first_node: 20,
     last_node_to_axis: 20,
     axis_to_right: 20,
+    edge_margin_top: 4,
+    edge_margin_bottom: 0,
     max_state_index: sr.max_state_index(names, state_indexes)
   };
 

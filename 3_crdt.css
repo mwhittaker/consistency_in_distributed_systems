@@ -72,3 +72,8 @@ svg .edge_text {
   font-family: monospace;
   font-size: 10pt;
 }
+
+svg .edge_id {
+  font-family: monospace;
+  font-size: 10pt;
+}
