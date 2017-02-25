@@ -144,11 +144,13 @@ sr.NodeTimeline = function(name, label, axis, states) {
 //   edge: sr.Edge,
 //   line: Snap.line,
 //   text: Snap.text,
+//   id:   Snap.text,
 // }
-sr.DrawnEdge = function(edge, line, text) {
+sr.DrawnEdge = function(edge, line, text, id) {
   this.edge = edge;
   this.line = line;
   this.text = text;
+  this.id = id;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,8 @@
   <title>Consistency in Distributed Systems</title>
   <link href='style.css' rel='stylesheet'>
   <link href='3_crdt.css' rel='stylesheet'>
+  <link href="default.css" rel="stylesheet">
+  <link href="svg.css" rel="stylesheet">
   <meta name=viewport content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="favicon.ico">
 </head>
@@ -23,11 +25,82 @@
           Conflict-Free Replicated Data Types
         </a>
       </h1>
-      <p>Coming soon!</p>
 
-      <h2 id="formalizing_eventual_consistency">
-        Formalizing Eventual Consistency
-      </h2>
+      <p>
+      In this lecture, we'll formalize eventual consistency and strong eventual
+      consistency. We'll then explore a mathematical structure called a
+      semilattice and see how to use semilattices to design strongly eventually
+      consistent replicated data structures known as conflict-free replicated
+      data types (CRDTs).
+      </p>
+
+      <h2 id="state_based_objects">State-Based-Objects</h2>
+      <p>
+      In the first lecture, we looked at replicated <em>key-value stores</em>.
+      In the second lecture, we looked at replicated <em>registers</em>.
+      Key-value stores and registers are two specific examples of data
+      structures that we can replicate. In this lecture, we'll generalize
+      things and look at arbitrary replicated data structures known as
+      <strong>state-based objects</strong>.
+      </p>
+
+      <p>
+      A state-based object is an ordinary, plain Jane object&mdash;like the
+      objects you've likely seen in Python or Java&mdash;with
+        (1) some <strong>internal state</strong>,
+        (2) a <strong>query</strong> method,
+        (3) some number of <strong>update</strong> methods, and
+        (4) a <strong>merge</strong> method.
+      Understanding state-based objects is easiest with an example.  Here's one
+      written in Python:
+      </p>
+
+      <pre><code class="python">class Average(object):
+  def __init__(self):
+    self.sum = 0
+    self.cnt = 0
+
+  def query(self):
+    if self.cnt != 0:
+      return self.sum / self.cnt
+    else:
+      return 0
+
+  def update(self, x):
+    self.sum += x
+    self.cnt += 1
+
+  def merge(self, avg):
+    self.sum += avg.sum
+    self.cnt += avg.cnt</code></pre>
+
+      <p>
+      <code>Average</code> is a state-based-object representing a running
+      average. It's <em>internal state</em> are the two variables
+      <code>self.sum</code> and <code>self.cnt</code> representing the sum and
+      count of all the values being averaged. It's <em>query</em> method
+      returns the average. It's single <em>update</em> method updates the
+      average with a new value <code>x</code>. It's <em>merge</em> method
+      merges in a different <code>Average</code> object <code>avg</code>.
+      </p>
+
+      <p>
+      A <strong>replicated state-based-object</strong> is simply a
+      state-based-object that is replicated across multiple computers. For
+      example, if we replicate an <code>Average</code> state-based-object
+      across two servers <code>a</code> and <code>b</code> (as we do below),
+      then both <code>a</code> and <code>b</code> have a copy of the
+      state-based-object.  Clients (e.g.  <code>c</code> and <code>d</code>
+      below) send <code>query</code> and <code>update</code> requests to a
+      server's copy of the state-based-object.  Meanwhile, every server
+      periodically sends its copy of the state-based-object to other servers to
+      be merged with the <code>merge</code> method. That looks something like
+      this:
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 350" id="chaotic_replication"></svg>
+      </div>
 
       <div class="svgbox">
         <svg viewBox="0 0 400 40" id="simple_update_svg"></svg>
@@ -35,6 +108,8 @@
       <center>
         <table id="simple_update_table" class="srtable"></table>
       </center>
+
+      <h2 id="strong_eventual_consistency">(Strong) Eventual Consistency</h2>
 
       <h2 id="semilattices">Semilattices</h2>
 
@@ -73,8 +148,12 @@
   </div>
 
   <script src="snap.svg.js"></script>
+  <script src="distributed_systems.js"></script>
   <script src="state_based_replication.js"></script>
   <script src="3_crdt.js"></script>
+  <script src="highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
