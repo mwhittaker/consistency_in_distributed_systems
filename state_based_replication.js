@@ -36,6 +36,42 @@ sr.text_path_along_line = function(text, x1, y1, x2, y2) {
   return sr.line_path(x1 + dx, y1 + dy, x2, y2);
 }
 
+sr.element_with_class = function(element_name, class_name, text) {
+  var span = document.createElement(element_name);
+  span.className = class_name;
+  span.innerHTML = text;
+  return span;
+}
+
+sr.code_with_class = function(class_name, text) {
+  return sr.element_with_class("code", class_name, text);
+}
+
+sr.span_with_class = function(class_name, text) {
+  return sr.element_with_class("span", class_name, text);
+}
+
+sr.add_header = function(t, xs) {
+  var row = t.insertRow();
+  for (var i = 0; i < xs.length; ++i) {
+    var th = document.createElement("th");
+    th.appendChild(xs[i]);
+    row.appendChild(th);
+  }
+}
+
+sr.add_row = function(t, xs) {
+  var row = t.insertRow();
+  for (var i = 0; i < xs.length; ++i) {
+    var td = document.createElement("td");
+    td.appendChild(xs[i]);
+    if (i != 0) {
+      td.className = "sr_td";
+    }
+    row.appendChild(td);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // External Types
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,6 +90,19 @@ sr.Edge = function(src_name, src_state, dst_name, dst_state, msg) {
   this.dst_name = dst_name;
   this.dst_state = dst_state;
   this.msg = msg;
+}
+
+// type StateInfo = {
+//   index:   int,
+//   state:   string,
+//   query:   string,
+//   history: string,
+// }
+sr.StateInfo = function(index, state, query, history) {
+  this.index = index;
+  this.state = state;
+  this.query = query;
+  this.history = history;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -120,7 +169,7 @@ sr.max_state_index = function(names, states) {
 // - state_indexes: [int]
 sr.render_node_timeline = function(s, c, i, name, state_indexes) {
   var label_x = c.left_to_label;
-  var label_y = (i + 1) * c.timeline_height;
+  var label_y = c.top_margin + (i * c.timeline_height);
   var label = s.text(label_x, label_y, name);
   label.addClass("node_label");
 
@@ -149,6 +198,32 @@ sr.render_node_timeline = function(s, c, i, name, state_indexes) {
   }
 
   return new sr.NodeTimeline(name, label, axis, states);
+}
+
+sr.render_table = function(t, names, node_timelines, state_infos) {
+  sr.add_header(t, [
+    document.createTextNode(""),
+    sr.span_with_class("state_header", "state"),
+    sr.code_with_class("query_header", "query()"),
+    sr.span_with_class("history_header", "history"),
+  ]);
+
+  for (var i = 0; i < names.length; ++i) {
+    var name = names[i];
+    var timeline = node_timelines[name];
+    var infos = state_infos[name]
+
+    for (var j = 0; j < timeline.states.length; ++j) {
+      var state = timeline.states[j];
+      var info = infos[state.n];
+      sr.add_row(t, [
+        sr.code_with_class("name_td", name + state.n),
+        info.state,
+        info.query,
+        info.history
+      ]);
+    }
+  }
 }
 
 // - s: Snap.paper
@@ -181,25 +256,39 @@ sr.render_edge = function(s, c, node_timelines, edge) {
 
 // - s:      Snap.paper
 // - names:  [Name]
-// - states: {Name -> [int]}
+// - state_infos: {Name -> [StateInfo]}
 // - edges:  [Edge]
-sr.render = function(s, names, states, edges) {
+sr.render = function(s, t, names, state_infos, edges) {
+  var state_indexes = {};
+  for (var i = 0; i < names.length; ++i) {
+    var infos = state_infos[names[i]];
+    var indexes = [];
+    for (var j = 0; j < infos.length; ++j) {
+      indexes.push(infos[j].index);
+    }
+    state_indexes[names[i]] = indexes;
+  }
+
   var c = {
     svg_width: s.attr("viewBox").width,
+    top_margin: 20,
     timeline_height: 50,
     left_to_label: 10,
     label_to_axis: 10,
     axis_to_first_node: 20,
     last_node_to_axis: 20,
     axis_to_right: 20,
-    max_state_index: sr.max_state_index(names, states)
+    max_state_index: sr.max_state_index(names, state_indexes)
   };
 
   var node_timelines = {}
   for (var i = 0; i < names.length; ++i) {
     var name = names[i];
-    node_timelines[name] = sr.render_node_timeline(s, c, i, name, states[name]);
+    var tl = sr.render_node_timeline(s, c, i, name, state_indexes[name]);
+    node_timelines[name] = tl;
   }
+
+  sr.render_table(t, names, node_timelines, state_infos);
 
   var drawn_edges = [];
   for (var i = 0; i < edges.length; ++i) {

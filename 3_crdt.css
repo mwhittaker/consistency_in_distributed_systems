@@ -2,6 +2,23 @@
   margin-bottom: 1.15em;
 }
 
+.srtable {
+  margin-bottom: 1.15em;
+  border-collapse: collapse;
+}
+
+.srtable th, .srtable td {
+  padding: 5pt;
+}
+
+.state_header { }
+.query_header { }
+.history_header { }
+.name_td { }
+.sr_td {
+  border: 1pt solid black;
+}
+
 svg {
   margin-left: auto;
   margin-right: auto;
