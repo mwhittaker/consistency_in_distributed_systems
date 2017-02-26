@@ -44,7 +44,7 @@
       data types (CRDTs).
       </p>
 
-      <h2 id="state_based_objects">State-Based-Objects</h2>
+      <h2 id="state_based_objects">State-Based Objects</h2>
       <p>
       In the first lecture, we looked at replicated <em>key-value stores</em>.
       In the second lecture, we looked at replicated <em>registers</em>.
@@ -85,7 +85,7 @@
     self.cnt += avg.cnt</code></pre>
 
       <p>
-      <code>Average</code> is a state-based-object representing a running
+      <code>Average</code> is a state-based object representing a running
       average. It's <em>internal state</em> are the two variables
       <code>self.sum</code> and <code>self.cnt</code> representing the sum and
       count of all the values being averaged. It's <em>query</em> method
@@ -95,15 +95,15 @@
       </p>
 
       <p>
-      A <strong>replicated state-based-object</strong> is simply a
-      state-based-object that is replicated across multiple computers. For
-      example, if we replicate an <code>Average</code> state-based-object
+      A <strong>replicated state-based object</strong> is simply a
+      state-based object that is replicated across multiple computers. For
+      example, if we replicate an <code>Average</code> state-based object
       across two servers <code>a</code> and <code>b</code> (as we do below),
       then both <code>a</code> and <code>b</code> have a copy of the
-      state-based-object. Clients (e.g.  <code>c</code> and <code>d</code>
+      state-based object. Clients (e.g.  <code>c</code> and <code>d</code>
       below) send <code>query</code> and <code>update</code> requests to a
-      server's copy of the state-based-object. Meanwhile, every server
-      periodically sends its copy of the state-based-object to other servers to
+      server's copy of the state-based object. Meanwhile, every server
+      periodically sends its copy of the state-based object to other servers to
       be merged with the <code>merge</code> method. That looks something like
       this:
       </p>
@@ -115,8 +115,8 @@
       <p>
       Animated diagrams like these help us visualize how computers communicate
       in a distributed system, but they make it difficult to keep track of the
-      replicated state-based-object as it is queried, updated, and merged over
-      time. To more easily visualize the replicated state-based-object, we'll
+      replicated state-based object as it is queried, updated, and merged over
+      time. To more easily visualize the replicated state-based object, we'll
       introduce a new type of diagram. Here's an example:
       </p>
 
@@ -128,14 +128,14 @@
       </center>
 
       <p>
-      In these diagrams, snapshots of a state-based-object are drawn from left
+      In these diagrams, snapshots of a state-based object are drawn from left
       to right forwards through time. Here, we consider an <code>Average</code>
-      state-based-object on a single server <code>a</code>. The initial
-      snapshot of the state-based-object is labelled <code>a0</code>. Server
+      state-based object on a single server <code>a</code>. The initial
+      snapshot of the state-based object is labelled <code>a0</code>. Server
       <code>a</code> receives an <code>update(1)</code> request from some
-      client which updates the state-based-object to the next snapshot
+      client which updates the state-based object to the next snapshot
       <code>a1</code>. Server <code>a</code> then receives an
-      <code>update(3)</code> request which updates the state-based-object to
+      <code>update(3)</code> request which updates the state-based object to
       the snapshot <code>a2</code>.
       </p>
 
@@ -148,7 +148,7 @@
 
       <p>
       Beneath the diagram, we draw a table with one row for each snapshot of
-      the state-based-object.
+      the state-based object.
       </p>
 
       <ul>
@@ -184,7 +184,7 @@
       </ul>
 
       <p>
-      Here's an example diagram which traces a state-based-object replicated on
+      Here's an example diagram which traces a state-based object replicated on
       two servers: <code>a</code> and <code>b</code>. Notice how the causal
       history of <code>a1</code> is disjoint from the casual histories of
       <code>b1</code> and <code>b2</code>. The <code>update(2)</code> and
