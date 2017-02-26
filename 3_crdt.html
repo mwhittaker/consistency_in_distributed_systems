@@ -19,8 +19,18 @@
   </div>
 
   <div id="container">
+    <center
+      style="padding:32pt;
+             margin-bottom:20pt;
+             font-size:40pt;
+             line-height:1;
+             color:white;
+             background-color:black;">
+      <strong>WORK IN PROGRESS</strong>
+    </center>
+
     <article>
-      <h1 id="baseball" class="lecturetitle">
+      <h1 id="conflict_free_replicated_data_types" class="lecturetitle">
         <a href="https://scholar.google.com/scholar?cluster=4496511741683930603">
           Conflict-Free Replicated Data Types
         </a>
@@ -90,9 +100,9 @@
       example, if we replicate an <code>Average</code> state-based-object
       across two servers <code>a</code> and <code>b</code> (as we do below),
       then both <code>a</code> and <code>b</code> have a copy of the
-      state-based-object.  Clients (e.g.  <code>c</code> and <code>d</code>
+      state-based-object. Clients (e.g.  <code>c</code> and <code>d</code>
       below) send <code>query</code> and <code>update</code> requests to a
-      server's copy of the state-based-object.  Meanwhile, every server
+      server's copy of the state-based-object. Meanwhile, every server
       periodically sends its copy of the state-based-object to other servers to
       be merged with the <code>merge</code> method. That looks something like
       this:
@@ -102,15 +112,110 @@
         <svg viewBox="0 0 400 350" id="chaotic_replication"></svg>
       </div>
 
+      <p>
+      Animated diagrams like these help us visualize how computers communicate
+      in a distributed system, but they make it difficult to keep track of the
+      replicated state-based-object as it is queried, updated, and merged over
+      time. To more easily visualize the replicated state-based-object, we'll
+      introduce a new type of diagram. Here's an example:
+      </p>
+
       <div class="svgbox">
-        <svg viewBox="0 0 400 40" id="simple_update_svg"></svg>
+        <svg viewBox="0 0 400 50" id="trivial_update_svg"></svg>
+      </div>
+      <center>
+        <table id="trivial_update_table" class="srtable"></table>
+      </center>
+
+      <p>
+      In these diagrams, snapshots of a state-based-object are drawn from left
+      to right forwards through time. Here, we consider an <code>Average</code>
+      state-based-object on a single server <code>a</code>. The initial
+      snapshot of the state-based-object is labelled <code>a0</code>. Server
+      <code>a</code> receives an <code>update(1)</code> request from some
+      client which updates the state-based-object to the next snapshot
+      <code>a1</code>. Server <code>a</code> then receives an
+      <code>update(3)</code> request which updates the state-based-object to
+      the snapshot <code>a2</code>.
+      </p>
+
+      <p>
+      Each update request is assigned a unique identifier which is drawn below
+      the request. For example, the <code>update(1)</code> request is assigned
+      an identifier of <code>0</code>, and the <code>update(3)</code> request
+      is assigned an identifier of <code>1</code>.
+      </p>
+
+      <p>
+      Beneath the diagram, we draw a table with one row for each snapshot of
+      the state-based-object.
+      </p>
+
+      <ul>
+        <li>
+        The <em>first column</em> is the internal state
+        of the object. For example, <code>a0</code> has a sum of <code>0</code>
+        and a count of <code>0</code> (as specified by <code>Average</code>'s
+        constructor).  Similarly, <code>a1</code> has a sum of <code>1</code> and
+        a count of <code>1</code>.
+        </li>
+
+        <li>
+        The <em>second column</em> is the result of calling the snapshot's
+        <code>query()</code> method. For example, <code>a1.query()</code> returns
+        <code>1</code> because <code>a1.sum / a1.cnt</code> is equal to
+        <code>1</code>. Similarly, <code>a2.query()</code> returns <code>2</code>
+        because <code>a2.sum / a2.cnt</code> is equal to <code>2</code>.
+        </li>
+
+        <li>
+        The <em>third column</em> is the <strong>causal history</strong> of the
+        snapshot: the set of identifiers of every request that has contributed
+        to the snapshot's internal state. For example, <code>a0</code> hasn't
+        been affected by any requests, so its causal history is the empty set
+        <code>{}</code>. <code>a1</code> has been affected by the
+        <code>update(1)</code> request (id <code>0</code>), so
+        <code>a1</code>'s causal history is the set <code>{0}</code>. Finally,
+        <code>a2</code> has been affected by the <code>update(1)</code> request
+        (id <code>0</code>) <em>and</em> the <code>update(3)</code> request (id
+        <code>1</code>), so <code>a2</code>'s causal history is the set
+        <code>{0, 1}</code>.
+        </li>
+      </ul>
+
+      <p>
+      Here's an example diagram which traces a state-based-object replicated on
+      two servers: <code>a</code> and <code>b</code>. Notice how the causal
+      history of <code>a1</code> is disjoint from the casual histories of
+      <code>b1</code> and <code>b2</code>. The <code>update(2)</code> and
+      <code>update(4)</code> requests have not contributed to the state of
+      <code>a1</code>, so their identifiers do not appear in its causal
+      history. Conversely, the <code>update(1)</code> request has not
+      contributed to the state of either <code>b1</code> or <code>b2</code>, so
+      it does not appear in either of their causal histories.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 100" id="simple_update_svg"></svg>
       </div>
       <center>
         <table id="simple_update_table" class="srtable"></table>
       </center>
 
+      <p>
+      We can also use these diagrams to visualize <code>merge</code> requests.
+      In the diagram below, server <code>a</code> receives an
+      <code>update(2)</code> request which transitions <code>a0</code> to
+      <code>a1</code>. Similarly, server <code>b</code> receives an
+      <code>update(4)</code> request which transitions <code>b0</code> to
+      <code>b1</code>. Then, server <code>b</code> sends a copy of
+      <code>b1</code> to server <code>a</code>. When server <code>a</code>
+      receives the copy of <code>b1</code>, it merges <code>b1</code> into
+      <code>a1</code> which creates <code>a2</code>.
+      </p>
+
       <div class="svgbox">
-        <svg viewBox="0 0 400 150" id="simple_merge_svg"></svg>
+        <svg viewBox="0 0 400 120" id="simple_merge_svg"></svg>
       </div>
       <center>
         <table id="simple_merge_table" class="srtable"></table>

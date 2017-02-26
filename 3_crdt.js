@@ -1,3 +1,6 @@
+////////////////////////////////////////////////////////////////////////////////
+// Helper Functions
+////////////////////////////////////////////////////////////////////////////////
 function append_children(e, children) {
   for (var i = 0; i < children.length; ++i) {
     e.appendChild(children[i]);
@@ -21,35 +24,58 @@ function code(s) {
 }
 
 function avg(sum, count) {
-  return create_with_kids("div", [
-    code("sum: " + sum),
-    document.createElement("br"),
-    code("cnt: " + count),
-  ]);
-
-  return avg_span;
+  return code("sum="+sum+", cnt="+count)
 }
 
-function simple_update() {
-  var s = Snap("#simple_update_svg");
-  var t = document.getElementById("simple_update_table")
-
+////////////////////////////////////////////////////////////////////////////////
+// Diagrams
+////////////////////////////////////////////////////////////////////////////////
+function trivial_update() {
+  var s = Snap("#trivial_update_svg");
+  var t = document.getElementById("trivial_update_table")
   var a = "a";
+
+  var c = {};
   var names = [a];
   var states = {
     a: [
       new sr.StateInfo(0, avg(0, 0), code(0),   code("{}")),
       new sr.StateInfo(1, avg(1, 1), code(1),   code("{0}")),
-      new sr.StateInfo(2, avg(3, 2), code(1.5), code("{0, 1}")),
-      new sr.StateInfo(3, avg(6, 3), code(2),   code("{0, 1, 2}")),
+      new sr.StateInfo(2, avg(4, 2), code(2),   code("{0,1}")),
     ],
   };
   var edges = [
-    new sr.Edge(a, 0, a, 1, "u(1)", "0"),
-    new sr.Edge(a, 1, a, 2, "u(2)", "1"),
-    new sr.Edge(a, 2, a, 3, "u(3)", "2"),
+    new sr.Edge(a, 0, a, 1, "update(1)", "0"),
+    new sr.Edge(a, 1, a, 2, "update(3)", "1"),
   ];
-  sr.render(s, t, names, states, edges);
+  sr.render(s, t, c, names, states, edges);
+}
+
+function simple_update() {
+  var s = Snap("#simple_update_svg");
+  var t = document.getElementById("simple_update_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {timeline_height:50};
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(1, 1), code(1), code("{0}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{1}")),
+      new sr.StateInfo(2, avg(6, 2), code(3), code("{1,2}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "update(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "update(2)", "1"),
+    new sr.Edge(b, 1, b, 2, "update(4)", "2"),
+  ];
+  sr.render(s, t, c, names, states, edges);
 }
 
 function simple_merge() {
@@ -58,25 +84,26 @@ function simple_merge() {
   var a = "a";
   var b = "b";
 
+  var c = {};
   var names = [a, b];
   var states = {
     a: [
       new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
-      new sr.StateInfo(1, avg(4, 1), code(4), code("{0}")),
-      new sr.StateInfo(2, avg(6, 2), code(3), code("{0,2}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{0}")),
+      new sr.StateInfo(2, avg(6, 2), code(3), code("{0,1}")),
     ],
     b: [
       new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
-      new sr.StateInfo(1, avg(2, 1), code(2), code("{1}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
     ],
   };
   var edges = [
-    new sr.Edge(a, 0, a, 1, "u(4)", "0"),
-    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
-    new sr.Edge(a, 1, a, 2, "m(b1)", "2"),
-    new sr.Edge(b, 1, a, 2, "m(b1)", "2"),
+    new sr.Edge(a, 0, a, 1, "update(2)", "0"),
+    new sr.Edge(b, 0, b, 1, "update(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "merge(b1)", ""),
   ];
-  sr.render(s, t, names, states, edges);
+  sr.render(s, t, c, names, states, edges);
 }
 
 function chaotic_replication() {
@@ -118,9 +145,10 @@ function chaotic_replication() {
 function chaotic() {
   var s = Snap("#chaotic_svg");
   var t = document.getElementById("chaotic_table")
-
   var a = "a";
   var b = "b";
+
+  var c = {};
   var names = [a, b];
   var states = {
     a: [
@@ -145,10 +173,11 @@ function chaotic() {
     new sr.Edge(b, 1, b, 2, "u(4)"),
     new sr.Edge(a, 2, a, 3, "u2(3)"),
   ];
-  sr.render(s, t, names, states, edges);
+  sr.render(s, t, c, names, states, edges);
 }
 
 function main() {
+  trivial_update();
   simple_update();
   simple_merge();
   chaotic_replication();

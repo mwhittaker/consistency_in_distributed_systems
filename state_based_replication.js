@@ -306,10 +306,11 @@ sr.render_edge = function(s, c, node_timelines, edge) {
 }
 
 // - s:      Snap.paper
+// - dc:     Config
 // - names:  [Name]
 // - state_infos: {Name -> [StateInfo]}
 // - edges:  [Edge]
-sr.render = function(s, t, names, state_infos, edges) {
+sr.render = function(s, t, dc, names, state_infos, edges) {
   var state_indexes = {};
   for (var i = 0; i < names.length; ++i) {
     var infos = state_infos[names[i]];
@@ -322,8 +323,8 @@ sr.render = function(s, t, names, state_infos, edges) {
 
   var c = {
     svg_width: s.attr("viewBox").width,
-    top_margin: 25,
-    timeline_height: 100,
+    top_margin: 30,
+    timeline_height: 75,
     left_to_label: 10,
     label_to_axis: 10,
     axis_to_first_node: 20,
@@ -333,6 +334,11 @@ sr.render = function(s, t, names, state_infos, edges) {
     edge_margin_bottom: 0,
     max_state_index: sr.max_state_index(names, state_indexes)
   };
+  for (var key in dc) {
+    if (dc.hasOwnProperty(key)) {
+      c[key] = dc[key];
+    }
+  }
 
   var node_timelines = {}
   for (var i = 0; i < names.length; ++i) {

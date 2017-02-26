@@ -44,20 +44,20 @@ svg .node_axis {
 
 svg .node_state_text {
   font-family: monospace;
-  font-size: 10pt;
+  font-size: 11pt;
   text-anchor: middle;
   alignment-baseline: central;
 }
 
 svg .node_state_circle {
-  r: 15;
+  r: 18;
   fill: white;
   stroke: black;
   stroke-width: 1;
 }
 
 svg .node_state_circle_hovered {
-  r: 15;
+  r: 20;
   fill: rgb(253, 253, 150);
   stroke: black;
   stroke-width: 1;
@@ -70,10 +70,11 @@ svg .edge_line {
 
 svg .edge_text {
   font-family: monospace;
-  font-size: 10pt;
+  font-size: 11pt;
 }
 
 svg .edge_id {
   font-family: monospace;
   font-size: 10pt;
+  fill: gray;
 }
