@@ -353,4 +353,6 @@ sr.render = function(s, t, dc, names, state_infos, edges) {
   for (var i = 0; i < edges.length; ++i) {
     drawn_edges.push(sr.render_edge(s, c, node_timelines, edges[i]));
   }
+
+  return [node_timelines, drawn_edges];
 }

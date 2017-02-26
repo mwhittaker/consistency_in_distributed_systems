@@ -49,14 +49,16 @@
       In the first lecture, we looked at replicated <em>key-value stores</em>.
       In the second lecture, we looked at replicated <em>registers</em>.
       Key-value stores and registers are two specific examples of data
-      structures that we can replicate. In this lecture, we'll generalize
+      structures that we can replicate.  In this section, we'll generalize
       things and look at arbitrary replicated data structures known as
-      <strong>state-based objects</strong>.
+      state-based objects. We'll then introduce a way to visualize the state of
+      a replicated state-based object over time.
       </p>
 
       <p>
-      A state-based object is an ordinary, plain Jane object&mdash;like the
-      objects you've likely seen in Python or Java&mdash;with
+      A <strong>state-based object</strong> is an ordinary, plain Jane
+      object&mdash;like the objects you've likely seen in Python or
+      Java&mdash;with
         (1) some <strong>internal state</strong>,
         (2) a <strong>query</strong> method,
         (3) some number of <strong>update</strong> methods, and
@@ -153,33 +155,47 @@
 
       <ul>
         <li>
-        The <em>first column</em> is the internal state
-        of the object. For example, <code>a0</code> has a sum of <code>0</code>
-        and a count of <code>0</code> (as specified by <code>Average</code>'s
-        constructor).  Similarly, <code>a1</code> has a sum of <code>1</code> and
-        a count of <code>1</code>.
+        The <em>first</em> column is the internal state of the object. For
+        example, <code>a0</code> has a sum of <code>0</code> and a count of
+        <code>0</code> (as specified by <code>Average</code>'s constructor).
+        Similarly, <code>a1</code> has a sum of <code>1</code> and a count of
+        <code>1</code>.
         </li>
 
         <li>
-        The <em>second column</em> is the result of calling the snapshot's
-        <code>query()</code> method. For example, <code>a1.query()</code> returns
-        <code>1</code> because <code>a1.sum / a1.cnt</code> is equal to
-        <code>1</code>. Similarly, <code>a2.query()</code> returns <code>2</code>
-        because <code>a2.sum / a2.cnt</code> is equal to <code>2</code>.
+        The <em>second</em> column is the result of calling the snapshot's
+        <code>query()</code> method. For example, <code>a1.query()</code>
+        returns <code>1</code> because <code>a1.sum / a1.cnt</code> is equal to
+        <code>1</code>. Similarly, <code>a2.query()</code> returns
+        <code>2</code> because <code>a2.sum / a2.cnt</code> is equal to
+        <code>2</code>.
         </li>
 
         <li>
-        The <em>third column</em> is the <strong>causal history</strong> of the
-        snapshot: the set of identifiers of every request that has contributed
-        to the snapshot's internal state. For example, <code>a0</code> hasn't
-        been affected by any requests, so its causal history is the empty set
-        <code>{}</code>. <code>a1</code> has been affected by the
-        <code>update(1)</code> request (id <code>0</code>), so
-        <code>a1</code>'s causal history is the set <code>{0}</code>. Finally,
-        <code>a2</code> has been affected by the <code>update(1)</code> request
-        (id <code>0</code>) <em>and</em> the <code>update(3)</code> request (id
-        <code>1</code>), so <code>a2</code>'s causal history is the set
-        <code>{0, 1}</code>.
+          <p>
+          The <em>third</em> (and most complex) column is the <strong>causal
+          history</strong> of the snapshot: the set of identifiers of every
+          request that has contributed to the snapshot's internal state.
+          </p>
+
+          <p>
+          For example, <code>a0</code> hasn't
+          been affected by any requests, so its causal history is the empty set
+          <code>{}</code>. <code>a1</code> has been affected by the
+          <code>update(1)</code> request (id <code>0</code>), so
+          <code>a1</code>'s causal history is the set <code>{0}</code>. Finally,
+          <code>a2</code> has been affected by the <code>update(1)</code> request
+          (id <code>0</code>) <em>and</em> the <code>update(3)</code> request (id
+          <code>1</code>), so <code>a2</code>'s causal history is the set
+          <code>{0,1}</code>.
+          </p>
+
+          <p>
+          In general if <code>y = x.update()</code> where the update has
+          identifier <code>i</code>, then the causal history of <code>y</code>
+          is the causal history of <code>x</code> unioned with the singleton
+          set <code>{i}</code>.
+          </p>
         </li>
       </ul>
 
@@ -204,6 +220,7 @@
 
       <p>
       We can also use these diagrams to visualize <code>merge</code> requests.
+
       In the diagram below, server <code>a</code> receives an
       <code>update(2)</code> request which transitions <code>a0</code> to
       <code>a1</code>. Similarly, server <code>b</code> receives an
@@ -221,41 +238,279 @@
         <table id="simple_merge_table" class="srtable"></table>
       </center>
 
-      <h2 id="strong_eventual_consistency">(Strong) Eventual Consistency</h2>
+      <p>
+      Also notice that the causal history of <code>a2</code> (i.e.
+      <code>{0,1}</code>) is the union of <code>a1</code>'s causal history
+      (i.e. <code>{0}</code>) and <code>b1</code>'s causal history (i.e.
+      <code>{1}</code>). This makes intuitive sense because the both the
+      <code>update(2)</code> request (id <code>0</code>) and the
+      <code>update(4)</code> request (id <code>1</code>) contribute to the
+      state of <code>a2</code>.  In general, if <code>z = x.merge(y)</code>,
+      the causal history of <code>z</code> is the union of the causal histories
+      of <code>x</code> and <code>y</code>.
+      </p>
 
-      <h2 id="semilattices">Semilattices</h2>
+      <p>
+      Finally, recall that a server periodically sends its replica of the
+      state-based object to other servers to be merged. Thus, our diagrams will
+      look something like the following, where servers continually merge with
+      one another.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="converge_svg"></svg>
+      </div>
+      <div hidden>
+        <table id="converge_table" class="srtable"></table>
+      </div>
+
+      <h2 id="strong_eventual_consistency">(Strong) Eventual Consistency</h2>
+      <p>
+      Equipped with an understanding of replicated state-based objects and
+      causal history, we're ready to define eventual consistency and strong
+      eventual consistency! In this section, we'll also bolster our grasp on
+      the two definitions by looking at four state-based
+      objects&mdash;<code>Average</code>, <code>NoMergeAverage</code>,
+      <code>BMergeAverage</code>, and <code>SECAverage</code>&mdash;and decide
+      whether they are eventually consistent, strongly eventually consistent,
+      neither, or both.
+      </p>
+
+      <p>
+      We say a replicated state-based object is <strong>eventually
+      consistent</strong> (EC) if whenever two replicas of the state-based
+      object have the same causal history, the <em>eventually</em> (not
+      necessarily immediately) converge to the same internal state.
+
+      We say a replicated state-based object is <strong>strongly eventually
+      consistent</strong> (SEC) if whenever two snapshots of the state-based
+      object have the same causal history, they (immediately) have the same
+      internal state.
+
+      Note that strong eventual consistency implies eventual consistency.
+      </p>
+
+      <p>
+      The definitions of eventual consistency and strong eventual consistency
+      are best understood with examples. First, let's consider the
+      <code>Average</code> state-based object we defined above and ask
+      ourselves whether or not it is eventually consistent or strongly
+      eventually consistent. Consider the following execution (note that we've
+      abbreviated <code>update</code> as <code>u</code> and <code>merge</code>
+      as <code>m</code>).
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="diverge_svg"></svg>
+      </div>
+      <center>
+        <table id="diverge_table" class="srtable"></table>
+      </center>
+
+      <p>
+      Snapshots <code>a2</code>, <code>b2</code>, <code>a3</code>, and
+      <code>b3</code> (highlighted red) all have the same causal history
+      <code>{0,1}</code>. This means that <code>a</code>'s replica and
+      <code>b</code>'s replica have the same causal history. However, despite
+      having the same causal history, the two replicas do not converge to the
+      same internal state. In fact, they don't converge at all! As
+      <code>a</code> and <code>b</code> periodically send merge requests to one
+      another, the internal state of their replicas continues to change.
+      Neither replica converges on a single value. <strong>Thus,
+      <code>Average</code> is neither eventually consistent nor strongly
+      eventually consistent.</strong>
+      </p>
+
+      <p>
+      Next, let's look at the following <code>NoMergeAverage</code>
+      state-based object which is exactly the same as <code>Average</code>
+      except that its <code>merge</code> method does nothing at all.
+      </p>
+
+      <pre><code class="python">class NoMergeAverage(Average):
+  # __init__, query, and merge
+  # inherited from Average.
+
+  def merge(self, avg):
+    # Ignore merge requests!
+    pass</code></pre>
+
+      <p>
+      Unlike <code>Average</code>, <code>NoMergeAverage</code> is convergent.
+      However (like <code>Average</code>), <strong><code>NoMergeAverage</code>
+      is neither eventually consistent nor strongly eventually
+      consistent.</strong> To see why, let's take a look at the following
+      execution:
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="no_merge_average_svg"></svg>
+      </div>
+      <center>
+        <table id="no_merge_average_table" class="srtable"></table>
+      </center>
+
+      <p>
+      Snapshots <code>a2</code>, <code>b2</code>, <code>a3</code>, and
+      <code>b3</code> (highlighted red) all have the same causal history.
+      Moreover, both <code>a</code>'s replica and <code>b</code>'s replica of
+      the state-based object converge. However, <code>a</code>'s replica
+      converges to an internal state <code>{sum=2,cnt=1}</code> while
+      <code>b</code>'s replica converges to an internal state
+      <code>{sum=4,cnt=1}</code>. Because the two replicas converge to
+      <em>different</em> internal states, <code>NoMergeAverage</code> is
+      neither eventually consistent nor strongly eventually consistent.
+      </p>
+
+      <p>
+      Next, let's look at the <code>BMergeAverage</code> state-based object
+      which is exactly the same as <code>Average</code> except for the
+      <code>merge</code> function. When server <code>b</code> receives a merge
+      request from server <code>a</code>, it throws away its replica of the
+      state-based object and overwrites it with <code>a</code>'s replica. On
+      the other hand, when server <code>a</code> receives a merge request from
+      server <code>b</code>, it ignores it.
+      </p>
+
+      <pre><code class="python">class BMergeAverage(Average):
+  # __init__, query, and merge
+  # inherited from Average.
+
+  def merge(self, avg):
+    if on_server_b():
+      self.sum = avg.sum
+      self.cnt = avg.cnt
+    else:
+      # Server a ignores
+      # merge requests!</code></pre>
+
+      <p>
+      <strong><code>BMergeAverage</code> is eventually consistent, but not
+      strongly eventually consistent.</strong> To see why, consider the
+      following execution.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="b_merge_average_svg"></svg>
+      </div>
+      <center>
+        <table id="b_merge_average_table" class="srtable"></table>
+      </center>
+
+      <p>
+      Snapshots <code>b1</code>, <code>a1</code>, <code>b2</code>, and
+      <code>a2</code> (highlighted red) all have the same causal history.
+      Moreover, both <code>a</code>'s replica and <code>b</code>'s replica
+      eventually converge to the same internal state <code>{sum=0,cnt=0}</code>.
+      In fact, it's not difficult to convince yourself that this will happen in
+      every possible execution involving a <code>BMergeAverage</code>
+      state-based object. <code>a</code>'s replica and <code>b</code>'s replica
+      will always eventually converge to the same internal state! Thus,
+      <code>BMergeAverage</code> is eventually consistent.
+      </p>
+
+      <p>
+      However, let's take a closer look at snapshot <code>b1</code> and
+      <code>a1</code>. Both snapshots have the same causal history
+      <code>{0}</code>, but the two snapshots have different internal states.
+      <code>b1</code>'s internal state is <code>{sum=4,cnt=1}</code>, while
+      <code>a1</code>'s internal state is <code>{sum=0,cnt=0}</code>. Thus,
+      <code>BMergeAverage</code> is not strongly eventually consistent.
+      </p>
+
+      <p>
+      Finally, let's look at the <code>MaxAverage</code> state-based object
+      which is exactly the same as <code>Average</code> except that the
+      <code>merge</code> function now performs a pairwise maximum of
+      <code>sum</code> and <code>cnt</code>.
+      </p>
+
+      <pre><code class="python">class MaxAverage(Average):
+  # __init__, query, and merge
+  # inherited from Average.
+
+  def merge(self, avg):
+    self.sum = max(self.sum, avg.sum)
+    self.cnt = max(self.cnt, avg.cnt)</code></pre>
+
+      <p>
+      <strong><code>MaxAverage</code> is both eventually consistent and
+      strongly eventually consistent!</strong> To see why, consider the
+      following execution.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="max_average_svg"></svg>
+      </div>
+      <center>
+        <table id="max_average_table" class="srtable"></table>
+      </center>
+
+      <p>
+      Snapshots <code>a2</code>, <code>b2</code>, <code>a3</code>, and
+      <code>b3</code> (highlighted red) all have the same causal history.
+      Better yet, they all have the same internal state too! This is no
+      coincidence. For <em>every</em> execution involving a replicated
+      <code>MaxAverage</code> state-based object, if two snapshots have the
+      same causal history, they are guaranteed to have the same internal state.
+      Thus, <code>MaxAverage</code> is strongly eventually consistent (and
+      therefore eventually consistent too).
+      </p>
+
+      <p>
+      In the following table, we summarize the consistency of the four
+      state-based objects we've covered. C stands for convergent, EC stands for
+      eventually consistent, and SEC stands for strongly eventually consistent.
+      </p>
+
+      <center>
+        <table id="average_summary">
+          <tr>
+            <th></th>
+            <th>C?</th>
+            <th>EC?</th>
+            <th>SEC?</th>
+          </tr>
+          <tr>
+            <th><code>Average</code></th>
+            <td class="no">no</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+          </tr>
+          <tr>
+             <th><code>NoMergeAverage</code></th>
+             <td class="yes">yes</td>
+             <td class="no">no</td>
+             <td class="no">no</td>
+          </tr>
+          <tr>
+            <th>BMergeAverage</th>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td class="no">no</td>
+          </tr>
+          <tr>
+            <th>MaxAverage</th>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+          </tr>
+        </table>
+      </center>
 
       <h2 id="crdts">CRDTs</h2>
+      <p>
+      Unfortunately, even though <code>MaxAverage</code> is strongly eventually
+      consistent, its semantics are a bit weird. For example, in the execution
+      above, the effects of the <code>update(2)</code> request were completely
+      overwritten by the <code>update(4)</code> request!
+      </p>
+
       <h3 id="g_counter">G-Counter</h3>
       <h3 id="pn_counter">PN-Counter</h3>
       <h3 id="g_set">G-Set</h3>
       <h3 id="2p_set">2P-Set</h3>
       <h3 id="or_set">OR-Set</h3>
-
-      <p>
-      Rough outline:
-      <ul>
-        <li>In the first lecture we saw eventual consistency. In this lecture,
-            we'll formalize EC a bit, introduce SEC, and see how to implement
-            SEC with CRDTs.</li>
-        <li>Introduce state-based objects with q, u, and m. Show diagrams of
-            how messages are exchanged between replicas over time.</li>
-        <li>Define causal history</li>
-        <li>Show the representation, query, and causal history at each point in
-            time.</li>
-        <li>Define eventual consistency w/ example</li>
-        <li>Define strong eventual consistency w/ set example</li>
-        <li>Interlude on semilattices</li>
-        <li>CRDT definitions w/ Python code?</li>
-        <li>G-counter</li>
-        <li>PN-counter</li>
-        <li>G-set</li>
-        <li>2P-set</li>
-        <li>OR-set</li>
-        <li>Why do CRDTs guarantee strong eventual consistency</li>
-        <li>I'll ignore op-based CRDTs and crazy CRDTs</li>
-      </ul>
-      </p>
     </article>
   </div>
 

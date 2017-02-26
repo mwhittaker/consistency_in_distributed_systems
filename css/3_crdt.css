@@ -11,6 +11,28 @@
   padding: 5pt;
 }
 
+#average_summary {
+  margin-bottom: 1.15em;
+  border-collapse: collapse;
+}
+
+#average_summary th, #average_summary td {
+  padding: 5pt;
+  min-width: 37pt;
+}
+
+#average_summary td {
+  border: 1pt solid black;
+}
+
+#average_summary .no {
+  background-color: #F9DAD0;
+}
+
+#average_summary .yes {
+  background-color: #C5DCA0;
+}
+
 .state_header { }
 .query_header { }
 .history_header { }
@@ -50,14 +72,18 @@ svg .node_state_text {
 }
 
 svg .node_state_circle {
-  r: 18;
+  r: 16;
   fill: white;
   stroke: black;
   stroke-width: 1;
 }
 
+svg .node_state_converged {
+  fill: #F9DAD0;
+}
+
 svg .node_state_circle_hovered {
-  r: 20;
+  r: 17;
   fill: rgb(253, 253, 150);
   stroke: black;
   stroke-width: 1;

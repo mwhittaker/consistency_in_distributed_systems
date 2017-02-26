@@ -17,6 +17,10 @@ class Average(object):
         self.sum += avg.sum
         self.cnt += avg.cnt
 
+class ConvergentAverage(Average):
+    def merge(self, avg):
+        print "yo"
+
 def main():
     x = Average();
     x.update(1)
@@ -32,6 +36,21 @@ def main():
 
     x.merge(y)
     assert x.query() == 5
+
+    x = ConvergentAverage();
+    x.update(1)
+    x.update(2)
+    x.update(3)
+    assert x.query() == 2
+
+    y = ConvergentAverage();
+    y.update(7)
+    y.update(8)
+    y.update(9)
+    assert y.query() == 8
+
+    x.merge(y)
+    assert x.query() == 2
 
 if __name__ == "__main__":
     main()

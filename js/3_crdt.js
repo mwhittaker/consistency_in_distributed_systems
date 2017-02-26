@@ -30,6 +30,42 @@ function avg(sum, count) {
 ////////////////////////////////////////////////////////////////////////////////
 // Diagrams
 ////////////////////////////////////////////////////////////////////////////////
+function chaotic_replication() {
+  var s = Snap("#chaotic_replication");
+
+  var c = ds.node(s, 100, 70, "c", ds.Color.Red);
+  var d = ds.node(s, 300, 70, "d", ds.Color.Green);
+  var a = ds.node(s, 200, 20, "a", ds.Color.Blue);
+  var b = ds.node(s, 200, 120, "b", ds.Color.Purple);
+  var bbox = s.group(c.element, d.element, a.element, b.element).getBBox();
+
+  var a_actions = new ds.NodeAction("c", [
+    new ds.Message([1, 0, 1], "update(2)", "ok", "a"),
+    new ds.Delay(1),
+    new ds.Message([3, 0, 3], "query()", "2", "b"),
+  ], true);
+  var b_actions = new ds.NodeAction("d", [
+    new ds.Delay(1),
+    new ds.Message([1, 0, 1], "update(4)", "ok", "b"),
+    new ds.Delay(2),
+    new ds.Message([1, 0, 1], "query()", "2", "a"),
+  ], true);
+  var s1_actions = new ds.NodeAction("a", [
+    new ds.Message([1, 0, 1], "merge", "ok", "b"),
+    new ds.Delay(2),
+    new ds.Message([1.5, 0, 1.5], "merge", "ok", "b"),
+  ], true);
+  var s2_actions = new ds.NodeAction("b", [
+    new ds.Delay(1),
+    new ds.Message([1, 0, 1], "merge", "ok", "a"),
+    new ds.Delay(3),
+    new ds.Message([1, 0, 1], "merge", "ok", "a"),
+  ], true);
+  var actions = [a_actions, b_actions, s1_actions, s2_actions];
+
+  ds.animate(s, bbox, [c, d, a, b], actions, 2000);
+}
+
 function trivial_update() {
   var s = Snap("#trivial_update_svg");
   var t = document.getElementById("trivial_update_table")
@@ -106,82 +142,267 @@ function simple_merge() {
   sr.render(s, t, c, names, states, edges);
 }
 
-function chaotic_replication() {
-  var s = Snap("#chaotic_replication");
-
-  var c = ds.node(s, 100, 70, "c", ds.Color.Red);
-  var d = ds.node(s, 300, 70, "d", ds.Color.Green);
-  var a = ds.node(s, 200, 20, "a", ds.Color.Blue);
-  var b = ds.node(s, 200, 120, "b", ds.Color.Purple);
-  var bbox = s.group(c.element, d.element, a.element, b.element).getBBox();
-
-  var a_actions = new ds.NodeAction("c", [
-    new ds.Message([1, 0, 1], "update(2)", "ok", "a"),
-    new ds.Delay(1),
-    new ds.Message([3, 0, 3], "query()", "2", "b"),
-  ], true);
-  var b_actions = new ds.NodeAction("d", [
-    new ds.Delay(1),
-    new ds.Message([1, 0, 1], "update(4)", "ok", "b"),
-    new ds.Delay(2),
-    new ds.Message([1, 0, 1], "query()", "2", "a"),
-  ], true);
-  var s1_actions = new ds.NodeAction("a", [
-    new ds.Message([1, 0, 1], "merge", "ok", "b"),
-    new ds.Delay(2),
-    new ds.Message([1.5, 0, 1.5], "merge", "ok", "b"),
-  ], true);
-  var s2_actions = new ds.NodeAction("b", [
-    new ds.Delay(1),
-    new ds.Message([1, 0, 1], "merge", "ok", "a"),
-    new ds.Delay(3),
-    new ds.Message([1, 0, 1], "merge", "ok", "a"),
-  ], true);
-  var actions = [a_actions, b_actions, s1_actions, s2_actions];
-
-  ds.animate(s, bbox, [c, d, a, b], actions, 2000);
-}
-
-function chaotic() {
-  var s = Snap("#chaotic_svg");
-  var t = document.getElementById("chaotic_table")
+function converge() {
+  var s = Snap("#converge_svg");
+  var t = document.getElementById("converge_table")
   var a = "a";
   var b = "b";
 
   var c = {};
   var names = [a, b];
+  var dx = 0.8;
   var states = {
     a: [
-      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
-      new sr.StateInfo(1, avg(2, 1), code(2), code("{u0}")),
-      new sr.StateInfo(2, avg(2, 1), code(2), code("{u0}")),
-      new sr.StateInfo(3, avg(8, 3), code(2), code("{u0}")),
+      new sr.StateInfo(0, text(""), text(""), text("")),
+      new sr.StateInfo(1, text(""), text(""), text("")),
+      new sr.StateInfo(1 + dx, text(""), text(""), text("")),
+      new sr.StateInfo(1 + 3*dx, text(""), text(""), text("")),
+      new sr.StateInfo(1 + 5*dx, text(""), text(""), text("")),
     ],
     b: [
       new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
-      new sr.StateInfo(1, avg(0, 0), code(0), code("{u0}")),
-      new sr.StateInfo(2, avg(4, 1), code(4), code("{u0, u1}")),
-      new sr.StateInfo(3, avg(6, 2), code(3), code("{u0, u1, u2}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
+      new sr.StateInfo(1 + 2*dx, avg(10, 3), code(3.3), code("{0,1}")),
+      new sr.StateInfo(1 + 4*dx, avg(26, 8), code(3.25), code("{0,1}")),
     ],
   };
   var edges = [
-    new sr.Edge(a, 0, a, 1, "u(2)"),
-    new sr.Edge(a, 1, a, 2, "merge"),
-    new sr.Edge(b, 1, a, 2, "merge"),
-
-    new sr.Edge(b, 1, b, 2, "u(4)"),
-    new sr.Edge(b, 1, b, 2, "u(4)"),
-    new sr.Edge(a, 2, a, 3, "u2(3)"),
+    new sr.Edge(a, 0, a, 1, "u", "0"),
+    new sr.Edge(b, 0, b, 1, "u", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 2, b, 2, "m(a2)", ""),
+    new sr.Edge(a, 2, a, 3, "", ""),
+    new sr.Edge(b, 2, a, 3, "m(b2)", ""),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 3, b, 3, "m(b2)", ""),
+    new sr.Edge(a, 3, a, 4, "", ""),
+    new sr.Edge(b, 3, a, 4, "m(b3)", ""),
   ];
   sr.render(s, t, c, names, states, edges);
 }
 
+function diverge() {
+  var s = Snap("#diverge_svg");
+  var t = document.getElementById("diverge_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var dx = 0.8;
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{0}")),
+      new sr.StateInfo(1 + dx, avg(6, 2), code(3), code("{0,1}")),
+      new sr.StateInfo(1 + 3*dx, avg(16, 5), code(3.2), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
+      new sr.StateInfo(1 + 2*dx, avg(10, 3), code(3.3), code("{0,1}")),
+      new sr.StateInfo(1 + 4*dx, avg(26, 8), code(3.25), code("{0,1}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(2)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 2, b, 2, "m(a2)", ""),
+    new sr.Edge(a, 2, a, 3, "", ""),
+    new sr.Edge(b, 2, a, 3, "m(b2)", ""),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 3, b, 3, "m(a3)", ""),
+  ];
+  node_timelines = sr.render(s, t, c, names, states, edges)[0];
+
+  node_timelines[a].states[2].circle.addClass("node_state_converged");
+  node_timelines[a].states[3].circle.addClass("node_state_converged");
+  node_timelines[b].states[2].circle.addClass("node_state_converged");
+  node_timelines[b].states[3].circle.addClass("node_state_converged");
+}
+
+function no_merge_average() {
+  var s = Snap("#no_merge_average_svg");
+  var t = document.getElementById("no_merge_average_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var dx = 0.8;
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{0}")),
+      new sr.StateInfo(1 + dx, avg(2, 1), code(2), code("{0,1}")),
+      new sr.StateInfo(1 + 3*dx, avg(2, 1), code(2), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
+      new sr.StateInfo(1 + 2*dx, avg(4, 1), code(4), code("{0,1}")),
+      new sr.StateInfo(1 + 4*dx, avg(4, 1), code(4), code("{0,1}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(2)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 2, b, 2, "m(a2)", ""),
+    new sr.Edge(a, 2, a, 3, "", ""),
+    new sr.Edge(b, 2, a, 3, "m(b2)", ""),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 3, b, 3, "m(a3)", ""),
+  ];
+  node_timelines = sr.render(s, t, c, names, states, edges)[0];
+
+  node_timelines[a].states[2].circle.addClass("node_state_converged");
+  node_timelines[a].states[3].circle.addClass("node_state_converged");
+  node_timelines[b].states[2].circle.addClass("node_state_converged");
+  node_timelines[b].states[3].circle.addClass("node_state_converged");
+}
+
+function no_merge_average() {
+  var s = Snap("#no_merge_average_svg");
+  var t = document.getElementById("no_merge_average_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var dx = 0.8;
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{0}")),
+      new sr.StateInfo(1 + dx, avg(2, 1), code(2), code("{0,1}")),
+      new sr.StateInfo(1 + 3*dx, avg(2, 1), code(2), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
+      new sr.StateInfo(1 + 2*dx, avg(4, 1), code(4), code("{0,1}")),
+      new sr.StateInfo(1 + 4*dx, avg(4, 1), code(4), code("{0,1}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(2)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 2, b, 2, "m(a2)", ""),
+    new sr.Edge(a, 2, a, 3, "", ""),
+    new sr.Edge(b, 2, a, 3, "m(b2)", ""),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 3, b, 3, "m(a3)", ""),
+  ];
+  node_timelines = sr.render(s, t, c, names, states, edges)[0];
+
+  node_timelines[a].states[2].circle.addClass("node_state_converged");
+  node_timelines[a].states[3].circle.addClass("node_state_converged");
+  node_timelines[b].states[2].circle.addClass("node_state_converged");
+  node_timelines[b].states[3].circle.addClass("node_state_converged");
+}
+
+function b_merge_average() {
+  var s = Snap("#b_merge_average_svg");
+  var t = document.getElementById("b_merge_average_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var dx = 0.8;
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1 + dx, avg(0, 0), code(0), code("{0}")),
+      new sr.StateInfo(1 + 3*dx, avg(0, 0), code(0), code("{0}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{0}")),
+      new sr.StateInfo(1 + 2*dx, avg(0, 0), code(0), code("{0}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(b, 0, b, 1, "u(4)", "0"),
+    new sr.Edge(a, 0, a, 1, "", ""),
+    new sr.Edge(b, 1, a, 1, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 1, b, 2, "m(a1)", ""),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 2, a, 2, "m(b2)", ""),
+  ];
+  node_timelines = sr.render(s, t, c, names, states, edges)[0];
+
+  node_timelines[a].states[1].circle.addClass("node_state_converged");
+  node_timelines[a].states[2].circle.addClass("node_state_converged");
+  node_timelines[b].states[1].circle.addClass("node_state_converged");
+  node_timelines[b].states[2].circle.addClass("node_state_converged");
+}
+
+function max_average() {
+  var s = Snap("#max_average_svg");
+  var t = document.getElementById("max_average_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var dx = 0.8;
+  var states = {
+    a: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(2, 1), code(2), code("{0}")),
+      new sr.StateInfo(1 + dx, avg(4, 1), code(4), code("{0,1}")),
+      new sr.StateInfo(1 + 3*dx, avg(4, 1), code(4), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, avg(0, 0), code(0), code("{}")),
+      new sr.StateInfo(1, avg(4, 1), code(4), code("{1}")),
+      new sr.StateInfo(1 + 2*dx, avg(4, 1), code(4), code("{0,1}")),
+      new sr.StateInfo(1 + 4*dx, avg(4, 1), code(4), code("{0,1}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(2)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(4)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "", ""),
+    new sr.Edge(a, 2, b, 2, "m(a2)", ""),
+    new sr.Edge(a, 2, a, 3, "", ""),
+    new sr.Edge(b, 2, a, 3, "m(b2)", ""),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 3, b, 3, "m(a3)", ""),
+  ];
+  node_timelines = sr.render(s, t, c, names, states, edges)[0];
+
+  node_timelines[a].states[2].circle.addClass("node_state_converged");
+  node_timelines[a].states[3].circle.addClass("node_state_converged");
+  node_timelines[b].states[2].circle.addClass("node_state_converged");
+  node_timelines[b].states[3].circle.addClass("node_state_converged");
+}
+
 function main() {
+  chaotic_replication();
   trivial_update();
   simple_update();
   simple_merge();
-  chaotic_replication();
-  // chaotic();
+  converge();
+  diverge();
+  no_merge_average();
+  b_merge_average();
+  max_average();
 }
 
 window.onload = main;
