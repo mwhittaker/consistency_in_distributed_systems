@@ -19,16 +19,6 @@
   </div>
 
   <div id="container">
-    <center
-      style="padding:32pt;
-             margin-bottom:20pt;
-             font-size:40pt;
-             line-height:1;
-             color:white;
-             background-color:black;">
-      <strong>WORK IN PROGRESS</strong>
-    </center>
-
     <article>
       <h1 id="conflict_free_replicated_data_types" class="lecturetitle">
         <a href="https://scholar.google.com/scholar?cluster=4496511741683930603">
@@ -672,7 +662,7 @@
         </li>
 
         <li>
-        The <code>update(x)</code> method, when invoked on the ith server,
+        The <code>add(x)</code> update method, when invoked on the ith server,
         increments the ith entry of the n-length array by <code>x</code>. For
         example, server 0 will increment the 0th entry of the array, server 1
         will increment the 1st entry of the array, and so on.
@@ -697,12 +687,12 @@
   def query(self):
     return sum(self.xs)
 
-  def update(self, x):
+  def add(self, x):
     assert x >= 0
     self.xs[self.i] += x
 
-  def merge(self, avg):
-    zipped = zip(self.xs, avg.xs)
+  def merge(self, c):
+    zipped = zip(self.xs, c.xs)
     self.xs = [max(x, y) for (x, y) in zipped]</code></pre>
 
       <p>
@@ -743,12 +733,12 @@
 
         <li>
         The <code>add(x)</code> method (the first of the two update methods)
-        invokes <code>p.update(x)</code>.
+        invokes <code>p.add(x)</code>.
         </li>
 
         <li>
         The <code>sub(x)</code> method (the second of the two update methods)
-        invokes <code>n.update(x)</code>.
+        invokes <code>n.add(x)</code>.
         </li>
 
         <li>
@@ -771,15 +761,15 @@
 
   def add(self, x):
     assert x >= 0
-    self.p.update(x)
+    self.p.add(x)
 
   def sub(self, x):
     assert x >= 0
-    self.n.update(x)
+    self.n.add(x)
 
-  def merge(self, avg):
-    self.p.merge(avg.p)
-    self.n.merge(avg.n)</code></pre>
+  def merge(self, c):
+    self.p.merge(c.p)
+    self.n.merge(c.n)</code></pre>
 
       <p>
       As with G-Counters, if a PN-Counter object is replicated on n servers,
@@ -797,7 +787,117 @@
       </center>
 
       <h3 id="g_set">G-Set</h3>
+      <p>
+      A <strong>G-Set</strong> CRDT represents a replicated set which can be
+      added to but not removed from.
+      </p>
+
+      <ul>
+        <li>The <em>internal state</em> of a G-Set is just a set!</li>
+        <li>The <code>query</code> method returns the set.</li>
+        <li>The <code>add(x)</code> update method adds <code>x</code> to the
+            set.</li>
+        <li>The <code>merge</code> method performs a set union.</li>
+      </ul>
+
+      <p>
+      Pretty simple, huh? Not surprising considering set union is commutative,
+      associative, and idempotent. We can implement a G-Set in Python as
+      follows.
+      </p>
+
+      <pre><code class="python">class GSet(object):
+  def __init__(self):
+    self.xs = set()
+
+  def query(self):
+    return self.xs
+
+  def add(self, x):
+    self.xs.add(x)
+
+  def merge(self, s):
+    self.xs = self.xs.union(s.xs)</code></pre>
+
+      <p>
+      Let's take a look at an example execution.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="gset_svg"></svg>
+      </div>
+      <center>
+        <table id="gset_table" class="srtable"></table>
+      </center>
+
       <h3 id="2p_set">2P-Set</h3>
+      <p>
+      A <strong>2P-Set</strong> CRDT represents a replicated set which can be
+      added to <em>and</em> removed from.
+      </p>
+
+      <ul>
+        <li>
+        The <em>internal state</em> of a 2P-Set is a pair of two G-Sets named
+        <code>a</code> and <code>r</code>. <code>a</code> represents the set of
+        values added to the 2P-Set while <code>r</code> represents the set of
+        values removed from the 2P-Set.
+        </li>
+
+        <li>
+        The <code>query</code> method returns the set difference
+        <code>a.query() - r.query()</code>.
+        </li>
+
+        <li>
+        The <code>add(x)</code> method (the first of the two update methods)
+        invokes <code>a.add(x)</code>.
+        </li>
+
+        <li>
+        The <code>sub(x)</code> method (the second of the two update methods)
+        invokes <code>r.add(x)</code>.
+        </li>
+
+        <li>
+        The <code>merge</code> method performs a pairwise merge of
+        <code>a</code> and <code>r</code>.
+        </li>
+      </ul>
+
+      <p>
+      We can implement a 2P-Set in Python as follows.
+      </p>
+
+      <pre><code class="python">class TwoPSet(object):
+  def __init__(self):
+    self.a = GSet()
+    self.r = GSet()
+
+  def query(self):
+    return self.a.query() - self.r.query()
+
+  def add(self, x):
+    self.a.add(x)
+
+  def sub(self, x):
+    self.r.add(x)
+
+  def merge(self, s):
+    self.a.merge(s.a)
+    self.r.merge(s.r)</code></pre>
+
+      <p>
+      Let's look at an example execution.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="twopset_svg"></svg>
+      </div>
+      <center>
+        <table id="twopset_table" class="srtable"></table>
+      </center>
+
     </article>
   </div>
 

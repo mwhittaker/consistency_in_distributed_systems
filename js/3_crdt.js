@@ -24,7 +24,7 @@ function code(s) {
 }
 
 function avg(sum, count) {
-  return code("sum="+sum+", cnt="+count)
+  return code("sum:"+sum+", cnt:"+count)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -423,11 +423,11 @@ function gcounter() {
     ],
   };
   var edges = [
-    new sr.Edge(a, 0, a, 1, "u(1)", "0"),
-    new sr.Edge(b, 0, b, 1, "u(2)", "1"),
+    new sr.Edge(a, 0, a, 1, "add(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "add(2)", "1"),
     new sr.Edge(a, 1, a, 2, "", ""),
     new sr.Edge(b, 1, a, 2, "m(b1)", ""),
-    new sr.Edge(b, 1, b, 2, "u(4)", "2"),
+    new sr.Edge(b, 1, b, 2, "add(4)", "2"),
     new sr.Edge(b, 2, b, 3, "", ""),
     new sr.Edge(a, 2, b, 3, "m(a2)", ""),
   ];
@@ -474,6 +474,79 @@ function pncounter() {
   sr.render(s, t, c, names, states, edges);
 }
 
+function gset() {
+  var s = Snap("#gset_svg");
+  var t = document.getElementById("gset_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, code("{}"), code("{}"), code("{}")),
+      new sr.StateInfo(1, code("{1}"), code("{1}"), code("{0}")),
+      new sr.StateInfo(2, code("{1,2}"), code("{1,2}"), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, code("{}"), code("{}"), code("{}")),
+      new sr.StateInfo(1, code("{2}"), code("{2}"), code("{1}")),
+      new sr.StateInfo(2, code("{2,4}"), code("{2,4}"), code("{1,2}")),
+      new sr.StateInfo(3, code("{1,2,4}"), code("{1,2,4}"), code("{0,1,2}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "add(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "add(2)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "add(4)", "2"),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 2, b, 3, "m(a2)", ""),
+  ];
+  sr.render(s, t, c, names, states, edges);
+}
+
+function twopset_state(a, r) {
+  return create_with_kids("span", [
+      code("a:" + a + ", "),
+      code("r:" + r),
+  ]);
+}
+
+function twopset() {
+  var s = Snap("#twopset_svg");
+  var t = document.getElementById("twopset_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, twopset_state("{}", "{}"), code("{}"), code("{}")),
+      new sr.StateInfo(1, twopset_state("{1}", "{}"), code("{1}"), code("{0}")),
+      new sr.StateInfo(2, twopset_state("{1}", "{2}"), code("{1}"), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, twopset_state("{}", "{}"), code("{}"), code("{}")),
+      new sr.StateInfo(1, twopset_state("{}", "{2}"), code("{}"), code("{1}")),
+      new sr.StateInfo(2, twopset_state("{}", "{1,2}"), code("{}"), code("{1,2}")),
+      new sr.StateInfo(3, twopset_state("{1}", "{1,2}"), code("{2}"), code("{0,1,2}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "add(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "sub(2)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "sub(1)", "2"),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 2, b, 3, "m(a2)", ""),
+  ];
+  sr.render(s, t, c, names, states, edges);
+}
+
 function main() {
   chaotic_replication();
   trivial_update();
@@ -486,6 +559,8 @@ function main() {
   max_average();
   gcounter();
   pncounter();
+  gset();
+  twopset();
 }
 
 window.onload = main;
