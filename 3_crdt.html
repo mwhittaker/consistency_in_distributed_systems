@@ -50,7 +50,7 @@
       In the first lecture, we looked at replicated <em>key-value stores</em>.
       In the second lecture, we looked at replicated <em>registers</em>.
       Key-value stores and registers are two specific examples of data
-      structures that we can replicate.  In this section, we'll generalize
+      structures that we can replicate. In this section, we'll generalize
       things and look at arbitrary replicated data structures known as
       state-based objects. We'll then introduce a way to visualize the state of
       a replicated state-based object over time.
@@ -535,14 +535,11 @@
       <p>
       The last section demonstrated that designing a strongly eventually
       consistent state-based object with intuitive semantics is challenging.
-      Worse yet, as state-based objects become more complex, it becomes
-      increasingly difficult to verify whether or not a state-based object is
-      strongly eventually consistent.
-
       In this section, we define a particular class of state-based objects
       known as conflict-free replicated data types (CRDTs) which are guaranteed
       to be strongly eventually consistent and which usually have reasonable
-      semantics.
+      semantics. We'll then present four CRDTs: GCounters, PN-Counters, G-Sets
+      and 2P-Sets.
       </p>
 
       <p>
@@ -584,8 +581,10 @@
       </ul>
 
       <p>
-      To make things concrete, let's look at a couple trivial CRDTs. First up,
-      the <code>IntMax</code> CRDT.
+      To make things concrete, let's look at a very simple state-based object
+      and prove it is a CRDT. The following <code>IntMax</code> state-based
+      object wraps a single integer <code>x</code> where <code>merge(a,
+      b)</code> computes the maximum of <code>a.x</code> and <code>b.x</code>.
       </p>
 
       <pre><code class="python">class IntMax(object):
@@ -603,94 +602,200 @@
     self.x = max(self.x, other.x)</code></pre>
 
       <p>
-      We can easily verify that <code>IntMax</code> is a CRDT. We'll abuse
-      notation a bit and say an <code>IntMax</code> object <code>a</code> is
-      equal to the integer <code>a.x</code> it contains.
+      We can easily verify that <code>IntMax</code> is a CRDT by proving that
+      (a) <code>merge</code> is <em>associative</em>, <em>commutative</em>, and
+      <em>idempotent</em> and that (b) <code>update</code> is
+      <em>increasing</em>. The proofs are straightforward because the
+      <code>max</code> function itself is associative, commutative, and
+      idempotent!  Note that we'll abuse notation a bit and say an
+      <code>IntMax</code> object <code>a</code> is equal to the integer
+      <code>a.x</code> it contains.
       </p>
 
       <ul>
         <li>
-          <code>merge(merge(a, b), c)</code> <br/>
-          <code>= max(max(a.x, b.x), c.x)</code><br/>
-          <code>= max(a.x, max(b.x, c.x))</code><br/>
-          <code>= merge(a, merge(b, c))</code>
+        First, we prove that <code>merge</code> is <em>associative</em>.<br/>
+        <pre><code>  merge(merge(a, b), c)
+= max(max(a.x, b.x), c.x)
+= max(a.x, max(b.x, c.x))
+= merge(a, merge(b, c))</code></pre>
         </li>
 
         <li>
-          <code>merge(a, b)</code> <br/>
-          <code>= max(a.x, b.x)</code><br/>
-          <code>= max(b.x, a.x)</code><br/>
-          <code>= merge(b, a)</code>
+        Next, we prove that <code>merge</code> is <em>commutative</em>.<br/>
+        <pre><code>  merge(a, b)
+= max(a.x, b.x)
+= max(b.x, a.x)
+= merge(b, a)</code></pre>
         </li>
 
         <li>
-          <code>merge(a, a)</code> <br/>
-          <code>= max(a.x, a.x)</code><br/>
-          <code>= a.x</code><br/>
-          <code>= a</code><br/>
+        Then, we prove that <code>merge</code> is <em>idempotent</em>.<br/>
+        <pre><code>  merge(a, a)
+= max(a.x, a.x)
+= a.x
+= a</code></pre>
         </li>
 
         <li>
-          <code>merge(a, update(a, x))</code> <br/>
-          <code>= max(a.x, a.x + x)</code><br/>
-          <code>= a.x + x</code><br/>
-          <code>= update(a, x)</code><br/>
+        Finally, we prove that <code>update</code> is <em>increasing</em>.<br/>
+        <pre><code>  merge(a, update(a, x))
+= max(a.x, a.x + x)
+= a.x + x
+= update(a, x)</code></pre>
         </li>
       </ul>
 
       <p>
-      Next, let's look at the <code>BoolOr</code> CRDT.
+      We'll now turn our attention to four more complex CRDTS:
+        <em>G-Counters</em> (increment only counters);
+        <em>PN-Counters</em> (increment/decrement counters);
+        <em>G-Sets</em> (add only sets); and
+        <em>2P-Sets</em> (add/remove sets).
       </p>
-
-      <pre><code class="python">class BoolOr(object):
-  def __init__(self):
-    self.b = False
-
-  def query(self):
-    return self.b
-
-  def update(self, b):
-    self.b = self.b or b
-
-  def merge(self, other):
-    self.b = self.b or other.b</code></pre>
-
-      <p>
-      Again, it's easy to verify that <code>BoolOr</code> is a CRDT.
-      </p>
-
-      <ul>
-        <li>
-          <code>merge(merge(x, y), z)</code> <br/>
-          <code>= (x.b or y.b) or z.b</code><br/>
-          <code>= x.b or (y.b or z.b)</code><br/>
-          <code>= merge(x, merge(y, z))</code>
-        </li>
-
-        <li>
-          <code>merge(x, y)</code> <br/>
-          <code>= x.b or y.b</code><br/>
-          <code>= y.b or x.b</code><br/>
-          <code>= merge(y, x)</code>
-        </li>
-
-        <li>
-          <code>merge(x, x)</code> <br/>
-          <code>= x.b or x.b</code><br/>
-          <code>= x.b</code><br/>
-          <code>= x</code><br/>
-        </li>
-
-        <li>
-          <code>merge(x, update(x, b))</code> <br/>
-          <code>= x.b or (x.b or b)</code><br/>
-          <code>= x.b or b</code><br/>
-          <code>= update(x, b)</code><br/>
-        </li>
-      </ul>
 
       <h3 id="g_counter">G-Counter</h3>
+      <p>
+      A <strong>G-Counter</strong> CRDT represents a replicated counter which
+      can be added to but not subtracted from.
+      </p>
+
+      <ul>
+        <li>
+        The <em>internal state</em> of a G-Counter replicated on n machines is
+        n-length array of non-negative integers.
+        </li>
+
+        <li>
+        The <code>query</code> method returns the sum of every element in the
+        n-length array.
+        </li>
+
+        <li>
+        The <code>update(x)</code> method, when invoked on the ith server,
+        increments the ith entry of the n-length array by <code>x</code>. For
+        example, server 0 will increment the 0th entry of the array, server 1
+        will increment the 1st entry of the array, and so on.
+        </li>
+
+        <li>
+        The <code>merge</code> method performs a pairwise maximum of the two
+        arrays.
+        </li>
+      </ul>
+
+      <p>
+      We can implement a G-Counter in Python as follows.
+      </p>
+
+      <pre><code class="python">class GCounter(object):
+  def __init__(self, i, n):
+    self.i = i # server id
+    self.n = n # number of servers
+    self.xs = [0] * n
+
+  def query(self):
+    return sum(self.xs)
+
+  def update(self, x):
+    assert x >= 0
+    self.xs[self.i] += x
+
+  def merge(self, avg):
+    zipped = zip(self.xs, avg.xs)
+    self.xs = [max(x, y) for (x, y) in zipped]</code></pre>
+
+      <p>
+      If a G-Counter object is replicated on n servers, then we construct an
+      <code>GCounter(0, n)</code> object on server 0, a <code>GCounter(1,
+      n)</code> object on server 1, and so on.
+
+      Let's take a look at an example execution in which a G-Counter is
+      replicated on two servers where server <code>a</code> is server 0 and
+      server <code>b</code> is server 1.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="gcounter_svg"></svg>
+      </div>
+      <center>
+        <table id="gcounter_table" class="srtable"></table>
+      </center>
+
       <h3 id="pn_counter">PN-Counter</h3>
+      <p>
+      A <strong>PN-Counter</strong> CRDT represents a replicated counter which
+      can be added to <em>and</em> subtracted from.
+      </p>
+
+      <ul>
+        <li>
+        The <em>internal state</em> of a PN-Counter is a pair of two G-Counters
+        named <code>p</code> and <code>n</code>. <code>p</code> represents the
+        total value added to the PN-Counter while <code>n</code> represents the
+        total value subtracted from the PN-Counter.
+        </li>
+
+        <li>
+        The <code>query</code> method returns the difference <code>p.query() -
+        n.query()</code>.
+        </li>
+
+        <li>
+        The <code>add(x)</code> method (the first of the two update methods)
+        invokes <code>p.update(x)</code>.
+        </li>
+
+        <li>
+        The <code>sub(x)</code> method (the second of the two update methods)
+        invokes <code>n.update(x)</code>.
+        </li>
+
+        <li>
+        The <code>merge</code> method performs a pairwise merge of
+        <code>p</code> and <code>n</code>.
+        </li>
+      </ul>
+
+      <p>
+      We can implement a PN-Counter in Python as follows.
+      </p>
+
+      <pre><code class="python">class PNCounter(object):
+  def __init__(self, i, n):
+    self.p = GCounter(i, n)
+    self.n = GCounter(i, n)
+
+  def query(self):
+    return self.p.query() - self.n.query()
+
+  def add(self, x):
+    assert x >= 0
+    self.p.update(x)
+
+  def sub(self, x):
+    assert x >= 0
+    self.n.update(x)
+
+  def merge(self, avg):
+    self.p.merge(avg.p)
+    self.n.merge(avg.n)</code></pre>
+
+      <p>
+      As with G-Counters, if a PN-Counter object is replicated on n servers,
+      then we construct an <code>PNCounter(0, n)</code> object on server 0, a
+      <code>PNCounter(1, n)</code> object on server 1, and so on. Let's take a
+      look at another example execution. For brevity, we've only listed a
+      subset of a PN-Counter's internal state.
+      </p>
+
+      <div class="svgbox">
+        <svg viewBox="0 0 400 120" id="pncounter_svg"></svg>
+      </div>
+      <center>
+        <table id="pncounter_table" class="srtable"></table>
+      </center>
+
       <h3 id="g_set">G-Set</h3>
       <h3 id="2p_set">2P-Set</h3>
     </article>

@@ -393,6 +393,87 @@ function max_average() {
   node_timelines[b].states[3].circle.addClass("node_state_converged");
 }
 
+function gcounter_state(i, n, xs) {
+  return create_with_kids("span", [
+      code("i:" + i + ", "),
+      code("n:" + n + ", "),
+      code("xs:" + xs),
+  ]);
+}
+
+function gcounter() {
+  var s = Snap("#gcounter_svg");
+  var t = document.getElementById("gcounter_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, gcounter_state(0, 2, "[0,0]"), code(0), code("{}")),
+      new sr.StateInfo(1, gcounter_state(0, 2, "[1,0]"), code(1), code("{0}")),
+      new sr.StateInfo(2, gcounter_state(0, 2, "[1,2]"), code(3), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, gcounter_state(1, 2, "[0,0]"), code(0), code("{}")),
+      new sr.StateInfo(1, gcounter_state(1, 2, "[0,2]"), code(2), code("{1}")),
+      new sr.StateInfo(2, gcounter_state(1, 2, "[0,6]"), code(6), code("{1,2}")),
+      new sr.StateInfo(3, gcounter_state(1, 2, "[1,6]"), code(7), code("{0,1,2}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "u(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "u(2)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "u(4)", "2"),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 2, b, 3, "m(a2)", ""),
+  ];
+  sr.render(s, t, c, names, states, edges);
+}
+
+function pncounter_state(pxs, nxs) {
+  return create_with_kids("span", [
+      code("p.xs:" + pxs + ", "),
+      code("n.xs:" + nxs),
+  ]);
+}
+
+function pncounter() {
+  var s = Snap("#pncounter_svg");
+  var t = document.getElementById("pncounter_table")
+  var a = "a";
+  var b = "b";
+
+  var c = {};
+  var names = [a, b];
+  var states = {
+    a: [
+      new sr.StateInfo(0, pncounter_state(0,2,"[0,0]","[0,0]"), code(0), code("{}")),
+      new sr.StateInfo(1, pncounter_state(0,2,"[1,0]","[0,0]"), code(1), code("{0}")),
+      new sr.StateInfo(2, pncounter_state(0,2,"[1,0]","[0,2]"), code(-1), code("{0,1}")),
+    ],
+    b: [
+      new sr.StateInfo(0, pncounter_state(1,2,"[0,0]","[0,0]"), code(0), code("{}")),
+      new sr.StateInfo(1, pncounter_state(1,2,"[0,0]","[0,2]"), code(-2), code("{1}")),
+      new sr.StateInfo(2, pncounter_state(1,2,"[0,4]","[0,2]"), code(2), code("{1,2}")),
+      new sr.StateInfo(3, pncounter_state(1,2,"[1,4]","[0,2]"), code(3), code("{0,1,2}")),
+    ],
+  };
+  var edges = [
+    new sr.Edge(a, 0, a, 1, "add(1)", "0"),
+    new sr.Edge(b, 0, b, 1, "sub(2)", "1"),
+    new sr.Edge(a, 1, a, 2, "", ""),
+    new sr.Edge(b, 1, a, 2, "m(b1)", ""),
+    new sr.Edge(b, 1, b, 2, "add(4)", "2"),
+    new sr.Edge(b, 2, b, 3, "", ""),
+    new sr.Edge(a, 2, b, 3, "m(a2)", ""),
+  ];
+  sr.render(s, t, c, names, states, edges);
+}
+
 function main() {
   chaotic_replication();
   trivial_update();
@@ -403,6 +484,8 @@ function main() {
   no_merge_average();
   b_merge_average();
   max_average();
+  gcounter();
+  pncounter();
 }
 
 window.onload = main;
