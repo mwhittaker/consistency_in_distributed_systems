@@ -37,11 +37,12 @@
       </h1>
 
       <p>
-      In this lecture, we'll formalize eventual consistency and strong eventual
-      consistency. We'll then explore a mathematical structure called a
-      semilattice and see how to use semilattices to design strongly eventually
-      consistent replicated data structures known as conflict-free replicated
-      data types (CRDTs).
+      In this lecture, we'll define a particular class of replicated data
+      structures known as state-based objects and formalize what it means for
+      them to be eventually consistent and strongly eventually consistent.
+      We'll then survey conflict-free replicated data types (CRDTs): a specific
+      type of state-based object that is guaranteed to achieve strong eventual
+      consistency.
       </p>
 
       <h2 id="state_based_objects">State-Based Objects</h2>
@@ -63,7 +64,7 @@
         (2) a <strong>query</strong> method,
         (3) some number of <strong>update</strong> methods, and
         (4) a <strong>merge</strong> method.
-      Understanding state-based objects is easiest with an example.  Here's one
+      Understanding state-based objects is easiest with an example. Here's one
       written in Python:
       </p>
 
@@ -88,13 +89,33 @@
 
       <p>
       <code>Average</code> is a state-based object representing a running
-      average. It's <em>internal state</em> are the two variables
-      <code>self.sum</code> and <code>self.cnt</code> representing the sum and
-      count of all the values being averaged. It's <em>query</em> method
-      returns the average. It's single <em>update</em> method updates the
-      average with a new value <code>x</code>. It's <em>merge</em> method
-      merges in a different <code>Average</code> object <code>avg</code>.
+      average. Note the following:
       </p>
+
+      <ul>
+        <li>
+        <code>Average</code>'s <em>internal state</em> are the two variables
+        <code>self.sum</code> and <code>self.cnt</code> representing the sum
+        and count of all the values being averaged.
+        </li>
+
+        <li>
+        <code>Average</code>'s <em>query</em> method returns the average. Note
+        that <code>Average</code>'s <code>query</code> method does not modify
+        any internal state. This is true for every state-based object.
+        </li>
+
+        <li>
+        <code>Average</code>'s single <em>update</em> method updates the
+        average with a new value <code>x</code>. In general, a state-based
+        object can have multiple update methods.
+        </li>
+
+        <li>
+        <code>Average</code>'s <code>merge</code> method merges one
+        <code>Average</code> instance into another.
+        </li>
+      </ul>
 
       <p>
       A <strong>replicated state-based object</strong> is simply a
@@ -115,11 +136,11 @@
       </div>
 
       <p>
-      Animated diagrams like these help us visualize how computers communicate
-      in a distributed system, but they make it difficult to keep track of the
-      replicated state-based object as it is queried, updated, and merged over
-      time. To more easily visualize the replicated state-based object, we'll
-      introduce a new type of diagram. Here's an example:
+      Animated diagrams like these help us visualize how clients and servers
+      communicate in a distributed system, but they make it difficult to keep
+      track of the replicated state-based object as it is queried, updated, and
+      merged over time. To more easily visualize the replicated state-based
+      object, we'll introduce a new type of diagram. Here's an example:
       </p>
 
       <div class="svgbox">
@@ -245,7 +266,7 @@
       <code>{1}</code>). This makes intuitive sense because the both the
       <code>update(2)</code> request (id <code>0</code>) and the
       <code>update(4)</code> request (id <code>1</code>) contribute to the
-      state of <code>a2</code>.  In general, if <code>z = x.merge(y)</code>,
+      state of <code>a2</code>. In general, if <code>z = x.merge(y)</code>,
       the causal history of <code>z</code> is the union of the causal histories
       of <code>x</code> and <code>y</code>.
       </p>
@@ -290,6 +311,7 @@
       Note that strong eventual consistency implies eventual consistency.
       </p>
 
+      <h3 id="average"><code>Average</code></h3>
       <p>
       The definitions of eventual consistency and strong eventual consistency
       are best understood with examples. First, let's consider the
@@ -321,6 +343,7 @@
       eventually consistent.</strong>
       </p>
 
+      <h3 id="no_merge_average"><code>NoMergeAverage</code></h3>
       <p>
       Next, let's look at the following <code>NoMergeAverage</code>
       state-based object which is exactly the same as <code>Average</code>
@@ -362,6 +385,7 @@
       neither eventually consistent nor strongly eventually consistent.
       </p>
 
+      <h3 id="b_merge_average"><code>BMergeAverage</code></h3>
       <p>
       Next, let's look at the <code>BMergeAverage</code> state-based object
       which is exactly the same as <code>Average</code> except for the
@@ -418,6 +442,7 @@
       <code>BMergeAverage</code> is not strongly eventually consistent.
       </p>
 
+      <h3 id="max_average"><code>MaxAverage</code></h3>
       <p>
       Finally, let's look at the <code>MaxAverage</code> state-based object
       which is exactly the same as <code>Average</code> except that the
@@ -457,6 +482,14 @@
       therefore eventually consistent too).
       </p>
 
+      <p>
+      Unfortunately, even though <code>MaxAverage</code> is strongly eventually
+      consistent, its semantics are a bit weird. For example, in the execution
+      above, the effects of the <code>update(2)</code> request were completely
+      overwritten by the <code>update(4)</code> request!
+      </p>
+
+      <h3 id="summary">Summary</h3>
       <p>
       In the following table, we summarize the consistency of the four
       state-based objects we've covered. C stands for convergent, EC stands for
@@ -500,17 +533,166 @@
 
       <h2 id="crdts">CRDTs</h2>
       <p>
-      Unfortunately, even though <code>MaxAverage</code> is strongly eventually
-      consistent, its semantics are a bit weird. For example, in the execution
-      above, the effects of the <code>update(2)</code> request were completely
-      overwritten by the <code>update(4)</code> request!
+      The last section demonstrated that designing a strongly eventually
+      consistent state-based object with intuitive semantics is challenging.
+      Worse yet, as state-based objects become more complex, it becomes
+      increasingly difficult to verify whether or not a state-based object is
+      strongly eventually consistent.
+
+      In this section, we define a particular class of state-based objects
+      known as conflict-free replicated data types (CRDTs) which are guaranteed
+      to be strongly eventually consistent and which usually have reasonable
+      semantics.
       </p>
+
+      <p>
+      A <strong>conflict-free replicated datatype</strong> (CRDT) is a
+      state-based object that satisfies the following properties.  Let
+      <code>merge(x, y)</code> be the value of <code>x</code> after performing
+      <code>x.merge(y)</code>. Similarly, let <code>update(x, ...)</code> the
+      value of <code>x</code> after performing <code>x.update(...)</code>.
+      </p>
+
+      <ul>
+        <li>
+        The <code>merge</code> method is <strong>associative</strong>. This
+        means that for any three state-based objects <code>x</code>,
+        <code>y</code>, and <code>z</code>, <code>merge(merge(x, y), z)</code>
+        is equal to <code>merge(x, merge(y, z))</code>.
+        </li>
+
+        <li>
+        The <code>merge</code> method is <strong>commutative</strong>. This
+        means that for any two state-based objects, <code>x</code> and
+        <code>y</code>, <code>merge(x, y)</code> is equal to <code>merge(y,
+        x)</code>.
+        </li>
+
+        <li>
+        The <code>merge</code> method is <strong>idempotent</strong>. This
+        means that for any state-based object <code>x</code>, <code>merge(x,
+        x)</code> is equal to <code>x</code>.
+        </li>
+
+        <li>
+        Every update method is <strong>increasing</strong>. Let <code>x</code>
+        be an arbitrary state-based object and let <code>y = update(x,
+        ...)</code> be the result of applying an arbitrary update
+        <code>update</code> to <code>x</code>. The <code>update</code> method
+        is increasing if <code>merge(x, y)</code> is equal to <code>y</code>.
+        </li>
+      </ul>
+
+      <p>
+      To make things concrete, let's look at a couple trivial CRDTs. First up,
+      the <code>IntMax</code> CRDT.
+      </p>
+
+      <pre><code class="python">class IntMax(object):
+  def __init__(self):
+    self.x = 0
+
+  def query(self):
+    return self.x
+
+  def update(self, x):
+    assert x >= 0
+    self.x += x
+
+  def merge(self, other):
+    self.x = max(self.x, other.x)</code></pre>
+
+      <p>
+      We can easily verify that <code>IntMax</code> is a CRDT. We'll abuse
+      notation a bit and say an <code>IntMax</code> object <code>a</code> is
+      equal to the integer <code>a.x</code> it contains.
+      </p>
+
+      <ul>
+        <li>
+          <code>merge(merge(a, b), c)</code> <br/>
+          <code>= max(max(a.x, b.x), c.x)</code><br/>
+          <code>= max(a.x, max(b.x, c.x))</code><br/>
+          <code>= merge(a, merge(b, c))</code>
+        </li>
+
+        <li>
+          <code>merge(a, b)</code> <br/>
+          <code>= max(a.x, b.x)</code><br/>
+          <code>= max(b.x, a.x)</code><br/>
+          <code>= merge(b, a)</code>
+        </li>
+
+        <li>
+          <code>merge(a, a)</code> <br/>
+          <code>= max(a.x, a.x)</code><br/>
+          <code>= a.x</code><br/>
+          <code>= a</code><br/>
+        </li>
+
+        <li>
+          <code>merge(a, update(a, x))</code> <br/>
+          <code>= max(a.x, a.x + x)</code><br/>
+          <code>= a.x + x</code><br/>
+          <code>= update(a, x)</code><br/>
+        </li>
+      </ul>
+
+      <p>
+      Next, let's look at the <code>BoolOr</code> CRDT.
+      </p>
+
+      <pre><code class="python">class BoolOr(object):
+  def __init__(self):
+    self.b = False
+
+  def query(self):
+    return self.b
+
+  def update(self, b):
+    self.b = self.b or b
+
+  def merge(self, other):
+    self.b = self.b or other.b</code></pre>
+
+      <p>
+      Again, it's easy to verify that <code>BoolOr</code> is a CRDT.
+      </p>
+
+      <ul>
+        <li>
+          <code>merge(merge(x, y), z)</code> <br/>
+          <code>= (x.b or y.b) or z.b</code><br/>
+          <code>= x.b or (y.b or z.b)</code><br/>
+          <code>= merge(x, merge(y, z))</code>
+        </li>
+
+        <li>
+          <code>merge(x, y)</code> <br/>
+          <code>= x.b or y.b</code><br/>
+          <code>= y.b or x.b</code><br/>
+          <code>= merge(y, x)</code>
+        </li>
+
+        <li>
+          <code>merge(x, x)</code> <br/>
+          <code>= x.b or x.b</code><br/>
+          <code>= x.b</code><br/>
+          <code>= x</code><br/>
+        </li>
+
+        <li>
+          <code>merge(x, update(x, b))</code> <br/>
+          <code>= x.b or (x.b or b)</code><br/>
+          <code>= x.b or b</code><br/>
+          <code>= update(x, b)</code><br/>
+        </li>
+      </ul>
 
       <h3 id="g_counter">G-Counter</h3>
       <h3 id="pn_counter">PN-Counter</h3>
       <h3 id="g_set">G-Set</h3>
       <h3 id="2p_set">2P-Set</h3>
-      <h3 id="or_set">OR-Set</h3>
     </article>
   </div>
 
