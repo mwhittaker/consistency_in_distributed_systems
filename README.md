@@ -12,6 +12,7 @@ Lecture notes can be found on the [reading group website][site]. The design and
 styling of the site was stolen heavily from the very slick
 [redbook.io](http://redbook.io).
 
+
 ## TODO
 - [ ] Minify Javascript.
 - [ ] Defer CSS loads.
